@@ -1,0 +1,262 @@
+import { useState } from 'react';
+import { Plus, X, CheckCircle, Briefcase, MapPin, Clock, DollarSign, Users, Tag } from 'lucide-react';
+
+const SKILL_OPTIONS = [
+  'Python', 'Machine Learning', 'React', 'Node.js', 'SQL', 'AWS', 'Docker',
+  'Kubernetes', 'Java', 'TypeScript', 'Go', 'System Design', 'Data Structures',
+  'TensorFlow', 'PyTorch', 'MongoDB', 'Redis', 'Kafka', 'Spring Boot',
+  'Microservices', 'GraphQL', 'Flutter', 'Swift', 'Kotlin', 'C++',
+];
+
+export default function PostJob() {
+  const [posted, setPosted] = useState(false);
+  const [form, setForm] = useState({
+    title: '', type: 'Internship', location: '', mode: 'Hybrid',
+    stipend: '', duration: '', minCGPA: '', openings: '',
+    deadline: '', description: '', skills: [],
+    minSkillLevel: 60, departments: [],
+  });
+  const [skillInput, setSkillInput] = useState('');
+  const [errors, setErrors] = useState({});
+
+  const depts = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHE', 'All Departments'];
+
+  function addSkill(s) {
+    const sk = s.trim();
+    if (sk && !form.skills.includes(sk)) {
+      setForm(f => ({ ...f, skills: [...f.skills, sk] }));
+    }
+    setSkillInput('');
+  }
+
+  function removeSkill(s) {
+    setForm(f => ({ ...f, skills: f.skills.filter(x => x !== s) }));
+  }
+
+  function toggleDept(d) {
+    setForm(f => ({
+      ...f,
+      departments: f.departments.includes(d)
+        ? f.departments.filter(x => x !== d)
+        : [...f.departments, d]
+    }));
+  }
+
+  function validate() {
+    const e = {};
+    if (!form.title) e.title = 'Job title is required';
+    if (!form.location) e.location = 'Location is required';
+    if (!form.stipend) e.stipend = 'Stipend/Salary is required';
+    if (!form.duration) e.duration = 'Duration is required';
+    if (!form.deadline) e.deadline = 'Application deadline is required';
+    if (!form.description) e.description = 'Job description is required';
+    if (form.skills.length === 0) e.skills = 'Add at least one required skill';
+    return e;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setPosted(true);
+  }
+
+  if (posted) {
+    return (
+      <div className="animate-fade-in" style={{ textAlign: 'center', padding: '80px 20px', maxWidth: 560, margin: '0 auto' }}>
+        <div style={{ fontSize: 72, marginBottom: 20 }}>🎉</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, marginBottom: 10, color: '#111827' }}>
+          Opportunity Posted!
+        </h2>
+        <p style={{ color: '#6b7280', fontSize: 15, marginBottom: 32 }}>
+          <strong style={{ color: '#10b981' }}>{form.title}</strong> is now live and visible to{' '}
+          {form.departments.length > 0 ? form.departments.join(', ') : 'all departments'} students.
+          Matching candidates will be notified automatically.
+        </p>
+        <div className="card" style={{ textAlign: 'left', marginBottom: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              ['Role', form.title], ['Type', form.type], ['Mode', form.mode],
+              ['Location', form.location], ['Stipend', form.stipend], ['Duration', form.duration],
+              ['Min CGPA', form.minCGPA || 'None'], ['Deadline', form.deadline],
+            ].map(([k, v]) => (
+              <div key={k} style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 14px', border: '1px solid #e8eaf0' }}>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>{k}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 6 }}>Required Skills</div>
+            <div className="skill-tags">
+              {form.skills.map(s => <span key={s} className="tag">{s}</span>)}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button className="btn btn-primary" onClick={() => { setPosted(false); setForm({ title:'',type:'Internship',location:'',mode:'Hybrid',stipend:'',duration:'',minCGPA:'',openings:'',deadline:'',description:'',skills:[],minSkillLevel:60,departments:[] }); }}>
+            + Post Another
+          </button>
+          <button className="btn btn-ghost">View My Postings</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div className="page-hero">
+        <h1 className="page-hero-title">📋 Post an Opportunity</h1>
+        <p className="page-hero-subtitle">Create an internship, job, or project posting. Matched candidates will be automatically recommended.</p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Basic Info */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Briefcase size={16} color="#6366f1" /> Basic Details
+          </div>
+          <div className="grid-2">
+            <div className="form-group">
+              <label className="form-label">Job Title *</label>
+              <input className="form-input" placeholder="e.g. Software Engineering Intern" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+              {errors.title && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.title}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Opportunity Type *</label>
+              <select className="form-select" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+                <option>Internship</option>
+                <option>Full-Time</option>
+                <option>Part-Time</option>
+                <option>Research Project</option>
+                <option>Apprenticeship</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Location *</label>
+              <input className="form-input" placeholder="e.g. Bengaluru, Karnataka" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+              {errors.location && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.location}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Work Mode</label>
+              <select className="form-select" value={form.mode} onChange={e => setForm(f => ({ ...f, mode: e.target.value }))}>
+                <option>Remote</option><option>Hybrid</option><option>On-site</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Stipend / Salary *</label>
+              <input className="form-input" placeholder="e.g. ₹60,000/month or ₹12 LPA" value={form.stipend} onChange={e => setForm(f => ({ ...f, stipend: e.target.value }))} />
+              {errors.stipend && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.stipend}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Duration *</label>
+              <input className="form-input" placeholder="e.g. 6 months / Permanent" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
+              {errors.duration && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.duration}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Number of Openings</label>
+              <input className="form-input" type="number" placeholder="e.g. 10" value={form.openings} onChange={e => setForm(f => ({ ...f, openings: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Application Deadline *</label>
+              <input className="form-input" type="date" value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))} />
+              {errors.deadline && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.deadline}</span>}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Minimum CGPA</label>
+            <input className="form-input" type="number" step="0.1" min="0" max="10" placeholder="e.g. 7.5 (leave blank for no minimum)" value={form.minCGPA} onChange={e => setForm(f => ({ ...f, minCGPA: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Job Description *</label>
+            <textarea className="form-textarea" rows={4} placeholder="Describe the role, responsibilities, team, and what the candidate will learn or build..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={{ minHeight: 110 }} />
+            {errors.description && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.description}</span>}
+          </div>
+        </div>
+
+        {/* Skills */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Tag size={16} color="#6366f1" /> Required Skills
+          </div>
+          {errors.skills && <div style={{ marginBottom: 10, fontSize: 12, color: '#f43f5e' }}>{errors.skills}</div>}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <input
+              className="form-input" style={{ flex: 1 }}
+              placeholder="Type a skill and press Enter..."
+              value={skillInput}
+              onChange={e => setSkillInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(skillInput); } }}
+            />
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => addSkill(skillInput)}><Plus size={14} /> Add</button>
+          </div>
+          {/* Quick-add common skills */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>Quick add:</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {SKILL_OPTIONS.filter(s => !form.skills.includes(s)).slice(0, 14).map(s => (
+                <button key={s} type="button" onClick={() => addSkill(s)} style={{
+                  padding: '3px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 500,
+                  background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#6b7280', cursor: 'pointer'
+                }}>+ {s}</button>
+              ))}
+            </div>
+          </div>
+          {form.skills.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>Selected skills ({form.skills.length}):</div>
+              <div className="skill-tags">
+                {form.skills.map(s => (
+                  <span key={s} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+                    background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4f46e5'
+                  }}>
+                    {s}
+                    <X size={11} onClick={() => removeSkill(s)} style={{ cursor: 'pointer', opacity: 0.6 }} />
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ marginTop: 16 }}>
+            <label className="form-label">Minimum Skill Proficiency Required: {form.minSkillLevel}%</label>
+            <input type="range" min={30} max={95} value={form.minSkillLevel}
+              onChange={e => setForm(f => ({ ...f, minSkillLevel: +e.target.value }))}
+              style={{ width: '100%', accentColor: '#6366f1', marginTop: 8 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+              <span>30% (Beginner)</span><span>60% (Intermediate)</span><span>95% (Expert)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Eligibility */}
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users size={16} color="#6366f1" /> Target Departments
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {depts.map(d => (
+              <button key={d} type="button"
+                className={`btn btn-sm ${form.departments.includes(d) ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => toggleDept(d)}
+              >
+                {form.departments.includes(d) && <CheckCircle size={12} />} {d}
+              </button>
+            ))}
+          </div>
+          {form.departments.length === 0 && (
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10 }}>No selection = visible to all departments</div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button type="submit" className="btn btn-rose btn-lg" style={{ flex: 1 }}>
+            <Briefcase size={16} /> Publish Opportunity
+          </button>
+          <button type="button" className="btn btn-ghost btn-lg">Save as Draft</button>
+        </div>
+      </form>
+    </div>
+  );
+}
