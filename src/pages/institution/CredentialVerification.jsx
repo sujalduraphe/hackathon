@@ -26,7 +26,7 @@ export default function CredentialVerification() {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">✅ Credential Verification</h1>
+        <h1 className="page-hero-title">Credential Verification</h1>
         <p className="page-hero-subtitle">Verify projects and achievements your students add to their portfolios. Verified items are marked on their profile for recruiters.</p>
       </div>
 
@@ -49,7 +49,7 @@ export default function CredentialVerification() {
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{k.title(i)}</div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                   {i.student.name}{i.student.dept ? ` · ${i.student.dept}` : ''}{k.detail(i) ? ` · ${k.detail(i)}` : ''}
-                  {link && <> · <a href={link} target="_blank" rel="noreferrer" style={{ color: '#4f46e5' }}>view</a></>}
+                  {link && <> · <a href={link} target="_blank" rel="noreferrer" style={{ color: '#111111' }}>view</a></>}
                 </div>
               </div>
               {i.verified

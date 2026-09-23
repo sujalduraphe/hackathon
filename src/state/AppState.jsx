@@ -8,14 +8,14 @@ import { DEMO_ACCOUNTS, DEMO_PASSWORD } from '../lib/demo';
 
 const AppStateContext = createContext(null);
 
-const EMPTY = { profile: null, jobs: [], candidates: [], applications: [], assessments: [], analytics: null, programs: [], registrations: [] };
+const EMPTY = { profile: null, jobs: [], candidates: [], applications: [], assessments: [], analytics: null, programs: [], registrations: [], market: null };
 
 async function loadRoleData(role) {
   if (role === 'student') {
-    const [profile, jobs, applications, assessments, programs, registrations] = await Promise.all([
-      api('/students/me'), api('/jobs'), api('/applications'), api('/assessments'), api('/programs'), api('/registrations'),
+    const [profile, jobs, applications, assessments, programs, registrations, market] = await Promise.all([
+      api('/students/me'), api('/jobs'), api('/applications'), api('/assessments'), api('/programs'), api('/registrations'), api('/market/summary'),
     ]);
-    return { ...EMPTY, profile, jobs, applications, assessments, programs, registrations };
+    return { ...EMPTY, profile, jobs, applications, assessments, programs, registrations, market };
   }
   if (role === 'industry') {
     const [jobs, candidates, applications, programs] = await Promise.all([
@@ -24,10 +24,10 @@ async function loadRoleData(role) {
     return { ...EMPTY, jobs, candidates, applications, programs };
   }
   if (role === 'institution') {
-    const [candidates, applications, jobs, analytics] = await Promise.all([
-      api('/students'), api('/applications'), api('/jobs'), api('/analytics/institution'),
+    const [candidates, applications, jobs, analytics, market] = await Promise.all([
+      api('/students'), api('/applications'), api('/jobs'), api('/analytics/institution'), api('/market/summary'),
     ]);
-    return { ...EMPTY, candidates, applications, jobs, analytics };
+    return { ...EMPTY, candidates, applications, jobs, analytics, market };
   }
   if (role === 'faculty') {
     const [programs, registrations] = await Promise.all([api('/programs'), api('/registrations')]);
@@ -138,6 +138,22 @@ export function AppStateProvider({ children }) {
       }));
     },
 
+    // institution: market job-description imports (e.g. Glassdoor exports)
+    async importMarketCSV(file, source) {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('source', source);
+      const result = await api('/market/import', { method: 'POST', body: form });
+      const [market, analytics] = await Promise.all([api('/market/summary'), api('/analytics/institution')]);
+      setData(d => ({ ...d, market, analytics }));
+      return result;
+    },
+    async deleteMarketBatch(batch) {
+      await api(`/market/batches/${batch}`, { method: 'DELETE' });
+      const [market, analytics] = await Promise.all([api('/market/summary'), api('/analytics/institution')]);
+      setData(d => ({ ...d, market, analytics }));
+    },
+
     // industry: programs
     async createProgram(program) {
       const created = await api('/programs', { method: 'POST', body: program });
@@ -195,4 +211,4 @@ export function useAppState() {
 
 export const APPLICATION_STAGES = ['applied', 'shortlisted', 'assessment', 'interview', 'offered'];
 export const STAGE_LABELS = { applied: 'Applied', shortlisted: 'Shortlisted', assessment: 'Assessment', interview: 'Interview', offered: 'Offered', rejected: 'Not selected' };
-export const STAGE_COLORS = { applied: '#6366f1', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981', rejected: '#9ca3af' };
+export const STAGE_COLORS = { applied: '#111111', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981', rejected: '#9ca3af' };

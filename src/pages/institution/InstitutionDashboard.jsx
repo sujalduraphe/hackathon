@@ -22,7 +22,7 @@ export default function InstitutionDashboard({ onNavigate }) {
   const gaps = a.skillGaps.filter(g => g.studentsBelowBar > 0).slice(0, 8);
 
   const stats = [
-    { label: 'Students', value: a.students, note: `${verifiedStudents} with verified skills`, color: '#6366f1' },
+    { label: 'Students', value: a.students, note: `${verifiedStudents} with verified skills`, color: '#111111' },
     { label: 'Applying', value: withApplications, note: `${a.students ? Math.round((withApplications / a.students) * 100) : 0}% of cohort`, color: '#06b6d4' },
     { label: 'Offers', value: placed, note: `${a.funnel.offered || 0} offers received`, color: '#10b981' },
     { label: 'Pending verification', value: pendingVerification, note: 'portfolio items', color: '#f59e0b' },
@@ -31,7 +31,7 @@ export default function InstitutionDashboard({ onNavigate }) {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">🏛️ {a.college}</h1>
+        <h1 className="page-hero-title">{a.college}</h1>
         <p className="page-hero-subtitle">{user.name}{user.designation ? ` · ${user.designation}` : ''} · skill development, internship participation and placement progress</p>
       </div>
 
@@ -52,7 +52,9 @@ export default function InstitutionDashboard({ onNavigate }) {
           <div className="section-header">
             <div>
               <div className="section-title">Skill gaps vs industry demand</div>
-              <div className="section-subtitle">Students below the 60% bar in skills employers on the portal ask for</div>
+              <div className="section-subtitle">
+                Students below the 60% bar in skills employers ask for (portal postings{a.marketPostings ? ` + ${a.marketPostings} market job descriptions` : ''})
+              </div>
             </div>
           </div>
           {gaps.length === 0

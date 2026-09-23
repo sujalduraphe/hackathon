@@ -3,7 +3,7 @@ import { explainMatch } from '../../lib/matching';
 
 const PIPELINE_STAGES = ['applied', 'shortlisted', 'assessment', 'interview', 'offered'];
 const STAGE_LABELS = { applied: 'Applied', shortlisted: 'Shortlisted', assessment: 'Assessment', interview: 'Tech Interview', offered: 'Offered' };
-const STAGE_COLORS = { applied: '#6366f1', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981' };
+const STAGE_COLORS = { applied: '#111111', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981' };
 
 export default function IndustryDashboard({ onNavigate }) {
 
@@ -27,25 +27,25 @@ export default function IndustryDashboard({ onNavigate }) {
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
           <div style={{
             width: 56, height: 56, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #f43f5e, #e11d48)',
+            background: '#111111',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 700, boxShadow: '0 0 20px rgba(244,63,94,0.4)'
+            fontSize: 22, fontWeight: 700
           }}>
             {user.avatar}
           </div>
           <div>
-            <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}! 🏢</h1>
+            <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}!</h1>
             <p className="page-hero-subtitle">{[user.designation, user.organization].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
 
         <div style={{
-          background: 'linear-gradient(135deg, rgba(244,63,94,0.1), rgba(99,102,241,0.06))',
-          border: '1px solid rgba(244,63,94,0.2)', borderRadius: 16,
+          background: '#ffffff',
+          border: '1px solid #111111', borderRadius: 16,
           padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
         }}>
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>🎯 {jobs.length} active posting{jobs.length === 1 ? '' : 's'} · {applications.length} applicant{applications.length === 1 ? '' : 's'}</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{jobs.length} active posting{jobs.length === 1 ? '' : 's'} · {applications.length} applicant{applications.length === 1 ? '' : 's'}</div>
             <div style={{ fontSize: 13, color: '#9ca3af' }}>{count('applied')} new application{count('applied') === 1 ? '' : 's'} awaiting review</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -58,13 +58,12 @@ export default function IndustryDashboard({ onNavigate }) {
       {/* Stats */}
       <div className="stat-grid">
         {[
-          { label: 'Total Applicants', value: applications.length, icon: '👥', color: '#6366f1', change: `across ${jobs.length} posting${jobs.length === 1 ? '' : 's'}` },
-          { label: 'Shortlisted', value: count('shortlisted') + count('assessment'), icon: '⭐', color: '#f59e0b', change: `${count('assessment')} in assessment` },
-          { label: 'In Interview', value: count('interview'), icon: '🎙️', color: '#06b6d4', change: 'current stage' },
-          { label: 'Offers Made', value: count('offered'), icon: '✅', color: '#10b981', change: `${count('rejected')} not selected` },
+          { label: 'Total Applicants', value: applications.length, color: '#111111', change: `across ${jobs.length} posting${jobs.length === 1 ? '' : 's'}` },
+          { label: 'Shortlisted', value: count('shortlisted') + count('assessment'), color: '#f59e0b', change: `${count('assessment')} in assessment` },
+          { label: 'In Interview', value: count('interview'), color: '#06b6d4', change: 'current stage' },
+          { label: 'Offers Made', value: count('offered'), color: '#10b981', change: `${count('rejected')} not selected` },
         ].map((s, i) => (
           <div key={i} className="stat-card">
-            <div style={{ fontSize: 32 }}>{s.icon}</div>
             <div>
               <div className="stat-label">{s.label}</div>
               <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
@@ -78,7 +77,7 @@ export default function IndustryDashboard({ onNavigate }) {
       <div style={{ marginBottom: 28 }}>
         <div className="section-header">
           <div>
-            <div className="section-title">📋 Recruitment Pipeline (ATS)</div>
+            <div className="section-title">Recruitment Pipeline (ATS)</div>
             <div className="section-subtitle">Real-time candidate tracking across stages</div>
           </div>
           <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('talent')}>Full View →</button>
@@ -101,7 +100,7 @@ export default function IndustryDashboard({ onNavigate }) {
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                        background: '#111111',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700
                       }}>{c.avatar}</div>
                       <div>
@@ -125,13 +124,13 @@ export default function IndustryDashboard({ onNavigate }) {
       </div>
 
       {/* Top Candidates */}
-      <div className="section-title" style={{ marginBottom: 16 }}>⭐ Top Matched Candidates</div>
+      <div className="section-title" style={{ marginBottom: 16 }}>Top Matched Candidates</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {topMatched.map(c => (
           <div key={c.key} className="gap-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate('talent')}>
             <div style={{
               width: 44, height: 44, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              background: '#111111',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
             }}>{c.avatar}</div>
             <div style={{ flex: 1 }}>

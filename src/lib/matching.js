@@ -61,11 +61,20 @@ export const ROLE_FAMILIES = [
 /**
  * Industry requirement for a target role, aggregated from postings:
  * for each skill, how many matching postings ask for it and at what level.
+ * `market` (optional) is per-role skill counts from imported real-world job
+ * descriptions: { [role]: { postings, skills: { skill: count } } }. Those
+ * descriptions don't state a level, so they count at the default bar.
  */
-export function roleRequirements(role, jobs) {
+export function roleRequirements(role, jobs, market = null) {
   const family = ROLE_FAMILIES.find(f => f.role === role);
   const postings = family ? jobs.filter(j => family.pattern.test(j.title)) : [];
+  const m = market?.[role];
+  const marketPostings = m?.postings || 0;
+  const total = postings.length + marketPostings;
   const counts = {};
+  for (const [skill, n] of Object.entries(m?.skills || {})) {
+    counts[skill] = { skill, postings: n, levelSum: n * DEFAULT_REQUIRED_LEVEL };
+  }
   for (const j of postings) {
     const level = Number(j.minSkillLevel) || DEFAULT_REQUIRED_LEVEL;
     for (const s of new Set(j.skills.map(canonicalSkill))) {
@@ -76,20 +85,22 @@ export function roleRequirements(role, jobs) {
   }
   let reqs = Object.values(counts).map(c => ({
     skill: c.skill,
-    demand: Math.round((c.postings / postings.length) * 100),
+    demand: Math.round((c.postings / total) * 100),
     target: Math.round(c.levelSum / c.postings),
     postings: c.postings,
   }));
   if (!reqs.length && family) {
     reqs = family.fallback.map(s => ({ skill: s, demand: 100, target: DEFAULT_REQUIRED_LEVEL + 10, postings: 0 }));
   }
-  return { postings, requirements: reqs.sort((a, b) => b.demand - a.demand || a.skill.localeCompare(b.skill)) };
+  // with market data, ignore one-off mentions so the list stays focused
+  if (marketPostings >= 10) reqs = reqs.filter(r => r.demand >= 10);
+  return { postings, marketPostings, requirements: reqs.sort((a, b) => b.demand - a.demand || a.skill.localeCompare(b.skill)) };
 }
 
 /** Gap for each required skill of a role, ordered by what hurts readiness most. */
-export function roleGap(profile, role, jobs) {
+export function roleGap(profile, role, jobs, market = null) {
   const skills = canonicalProfile(profile);
-  const { postings, requirements } = roleRequirements(role, jobs);
+  const { postings, marketPostings, requirements } = roleRequirements(role, jobs, market);
   const gaps = requirements.map(r => {
     const current = skills[r.skill] ?? 0;
     const gap = Math.max(0, r.target - current);
@@ -103,17 +114,18 @@ export function roleGap(profile, role, jobs) {
     ? Math.round((gaps.reduce((s, g) => s + Math.min(g.current / g.target, 1) * g.demand, 0) /
         gaps.reduce((s, g) => s + g.demand, 0)) * 100)
     : 0;
-  return { postings, gaps, readiness };
+  return { postings, marketPostings, gaps, readiness };
 }
 
 /**
  * The role a student is currently closest to. Roles backed by live postings win
  * over roles that only have the baseline skill list.
  */
-export function closestRole(profile, jobs) {
+export function closestRole(profile, jobs, market = null) {
+  const evidence = r => r.postings.length + r.marketPostings > 0;
   return ROLE_FAMILIES
-    .map(f => ({ role: f.role, ...roleGap(profile, f.role, jobs) }))
-    .sort((a, b) => (b.postings.length > 0) - (a.postings.length > 0) || b.readiness - a.readiness)[0];
+    .map(f => ({ role: f.role, ...roleGap(profile, f.role, jobs, market) }))
+    .sort((a, b) => evidence(b) - evidence(a) || b.readiness - a.readiness)[0];
 }
 
 /** Rank candidates for a job, best first, with the full explanation attached. */

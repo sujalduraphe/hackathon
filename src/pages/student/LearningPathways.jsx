@@ -46,14 +46,14 @@ const LIBRARY = Object.fromEntries([...LEARNING_PATHS, ...EXTRA_PATHS].map(p => 
 
 const TYPE_COLORS = { free: 'emerald', paid: 'amber' };
 const PRIORITY = {
-  critical: { icon: '🔥', badge: 'rose', label: 'Critical gap' },
-  recommended: { icon: '⚡', badge: 'amber', label: 'Recommended' },
+  critical: { badge: 'rose', label: 'Critical gap' },
+  recommended: { badge: 'amber', label: 'Recommended' },
 };
 
 export default function LearningPathways({ onNavigate }) {
-  const { profile, jobs, programs } = useAppState();
+  const { profile, jobs, programs, market } = useAppState();
   const programsFor = skill => programs.filter(p => (p.skills || []).includes(skill));
-  const target = closestRole(profile.skills, jobs);
+  const target = closestRole(profile.skills, jobs, market?.roles);
   const gaps = target.gaps.filter(g => g.gap > 0);
   const [expanded, setExpanded] = useState(gaps[0]?.name ?? null);
   const withPath = gaps.filter(g => LIBRARY[g.name] || programsFor(g.name).length);
@@ -61,7 +61,7 @@ export default function LearningPathways({ onNavigate }) {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">📚 Learning Pathways</h1>
+        <h1 className="page-hero-title">Learning Pathways</h1>
         <p className="page-hero-subtitle">
           Recommendations for the skills you are missing for <strong>{target.role}</strong>, the role you are currently closest to.
         </p>
@@ -71,7 +71,7 @@ export default function LearningPathways({ onNavigate }) {
         {[
           { label: 'Skill gaps', value: gaps.length, color: '#f43f5e' },
           { label: 'Critical', value: gaps.filter(g => g.priority === 'critical').length, color: '#f59e0b' },
-          { label: 'With a path or program', value: withPath.length, color: '#6366f1' },
+          { label: 'With a path or program', value: withPath.length, color: '#111111' },
           { label: 'Free resources', value: withPath.reduce((n, g) => n + LIBRARY[g.name].filter(st => st.type === 'free').length, 0), color: '#10b981' },
         ].map(s => (
           <div key={s.label} className="stat-card">
@@ -100,14 +100,13 @@ export default function LearningPathways({ onNavigate }) {
               style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', cursor: path ? 'pointer' : 'default' }}
               onClick={() => (path || offered.length) && setExpanded(isOpen ? null : g.name)}
             >
-              <div style={{ fontSize: 22 }}>{pr.icon}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 700, fontSize: 16 }}>{g.name}</span>
                   <span className={`badge badge-${pr.badge}`}>{pr.label}</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>
-                  You: {g.current}% · Needed: {g.target}% · Asked in {g.postings ? `${g.demand}% of ${target.role} postings` : 'the baseline for this role'}
+                  You: {g.current}% · Needed: {g.target}% · Asked in {g.postings ? `${g.demand}% of ${target.role} job postings` : 'the baseline for this role'}
                 </div>
               </div>
               {path || offered.length
@@ -137,8 +136,8 @@ export default function LearningPathways({ onNavigate }) {
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 14, color: '#111827', marginBottom: 4 }}>{step.step}</div>
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 12, color: '#6b7280' }}>📚 {step.resource}</span>
-                          <span style={{ fontSize: 12, color: '#6b7280' }}>⏱ {step.duration}</span>
+                          <span style={{ fontSize: 12, color: '#6b7280' }}>{step.resource}</span>
+                          <span style={{ fontSize: 12, color: '#6b7280' }}>{step.duration}</span>
                           <span className={`badge badge-${TYPE_COLORS[step.type]}`}>{step.type === 'free' ? 'Free' : 'Paid'}</span>
                         </div>
                       </div>

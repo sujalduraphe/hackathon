@@ -30,7 +30,7 @@ function MatchBreakdown({ m, onNavigate }) {
         );
       })}
       {!m.eligible && (
-        <div style={{ marginTop: 10, fontSize: 13, color: '#f43f5e' }}>⚠️ {m.reasons[m.reasons.length - 1]}</div>
+        <div style={{ marginTop: 10, fontSize: 13, color: '#f43f5e' }}>{m.reasons[m.reasons.length - 1]}</div>
       )}
       {(m.partial.length > 0 || m.missing.length > 0) && (
         <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => onNavigate?.('learning')}>
@@ -80,7 +80,7 @@ export default function InternshipsJobs({ onNavigate }) {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">💼 Internships & Jobs</h1>
+        <h1 className="page-hero-title">Internships & Jobs</h1>
         <p className="page-hero-subtitle">Curated opportunities matched to your skill profile. Apply with 1 click.</p>
       </div>
 
@@ -122,7 +122,7 @@ export default function InternshipsJobs({ onNavigate }) {
             </div>
 
             <div className="job-card-header">
-              <div className="company-logo" style={{ background: `${job.color}22`, fontSize: 24 }}>{job.logo}</div>
+              <div className="company-logo" style={{ background: '#111111', color: '#ffffff', fontSize: 18, fontWeight: 700 }}>{job.company[0]}</div>
               <div style={{ flex: 1, paddingRight: 70 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>{job.title}</div>
                 <div style={{ fontSize: 13, color: '#6b7280' }}>{job.company}</div>
@@ -157,7 +157,7 @@ export default function InternshipsJobs({ onNavigate }) {
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               {applied.has(job.id) ? (
                 <div style={{ flex: 1, textAlign: 'center', padding: '8px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, fontSize: 13, color: '#10b981', fontWeight: 600 }}>
-                  ✅ Applied
+                  Applied
                 </div>
               ) : (
                 <button className="btn btn-sm btn-primary" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setSelectedJob(job); }}>
@@ -180,8 +180,8 @@ export default function InternshipsJobs({ onNavigate }) {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div className="company-logo" style={{ background: `${selectedJob.color}22`, fontSize: 28, width: 56, height: 56 }}>
-                  {selectedJob.logo}
+                <div className="company-logo" style={{ background: '#111111', color: '#ffffff', fontSize: 18, fontWeight: 700, width: 56, height: 56 }}>
+                  {selectedJob.company[0]}
                 </div>
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700 }}>{selectedJob.title}</div>
@@ -199,12 +199,12 @@ export default function InternshipsJobs({ onNavigate }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
               {[
-                ['📍 Location', selectedJob.location],
-                ['💰 Stipend', selectedJob.stipend],
-                ['⏱️ Duration', selectedJob.duration],
-                ['👥 Openings', `${selectedJob.openings} positions`],
-                ['📅 Deadline', selectedJob.deadline],
-                ['🎓 Min CGPA', selectedJob.minCGPA],
+                ['Location', selectedJob.location],
+                ['Stipend', selectedJob.stipend],
+                ['Duration', selectedJob.duration],
+                ['Openings', `${selectedJob.openings} positions`],
+                ['Deadline', selectedJob.deadline],
+                ['Min CGPA', selectedJob.minCGPA],
               ].map(([k, v]) => (
                 <div key={k} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px' }}>
                   <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>{k}</div>
@@ -227,7 +227,7 @@ export default function InternshipsJobs({ onNavigate }) {
                   flex: 1, textAlign: 'center', padding: '14px',
                   background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)',
                   borderRadius: 12, fontSize: 15, color: '#10b981', fontWeight: 700
-                }}>✅ Application Submitted</div>
+                }}>Application Submitted</div>
               ) : (
                 <button className="btn btn-primary btn-lg" style={{ flex: 1, opacity: selectedJob.m.eligible ? 1 : 0.5 }} disabled={!selectedJob.m.eligible || applying} onClick={() => applyJob(selectedJob.id)}>
                   Apply Now <ChevronRight size={16} />

@@ -87,7 +87,7 @@ export default function PostJob({ onNavigate }) {
   if (posted) {
     return (
       <div className="animate-fade-in" style={{ textAlign: 'center', padding: '80px 20px', maxWidth: 560, margin: '0 auto' }}>
-        <div style={{ fontSize: 72, marginBottom: 20 }}>🎉</div>
+        <div style={{ fontSize: 72, marginBottom: 20 }}></div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, marginBottom: 10, color: '#111827' }}>
           Opportunity Posted!
         </h2>
@@ -141,7 +141,7 @@ export default function PostJob({ onNavigate }) {
   return (
     <div className="animate-fade-in" style={{ maxWidth: 800, margin: '0 auto' }}>
       <div className="page-hero">
-        <h1 className="page-hero-title">📋 Post an Opportunity</h1>
+        <h1 className="page-hero-title">Post an Opportunity</h1>
         <p className="page-hero-subtitle">Create an internship, job, or project posting. Matched candidates will be automatically recommended.</p>
       </div>
 
@@ -149,7 +149,7 @@ export default function PostJob({ onNavigate }) {
         {/* Basic Info */}
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Briefcase size={16} color="#6366f1" /> Basic Details
+            <Briefcase size={16} color="#111111" /> Basic Details
           </div>
           <div className="grid-2">
             <div className="form-group">
@@ -236,7 +236,7 @@ export default function PostJob({ onNavigate }) {
         {/* Skills */}
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Tag size={16} color="#6366f1" /> Required Skills
+            <Tag size={16} color="#111111" /> Required Skills
           </div>
           {errors.skills && <div style={{ marginBottom: 10, fontSize: 12, color: '#f43f5e' }}>{errors.skills}</div>}
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
@@ -269,7 +269,7 @@ export default function PostJob({ onNavigate }) {
                   <span key={s} style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500,
-                    background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4f46e5'
+                    background: '#f5f5f5', border: '1px solid #111111', color: '#111111'
                   }}>
                     {s}
                     <X size={11} onClick={() => removeSkill(s)} style={{ cursor: 'pointer', opacity: 0.6 }} />
@@ -282,7 +282,7 @@ export default function PostJob({ onNavigate }) {
             <label className="form-label">Minimum Skill Proficiency Required: {form.minSkillLevel}%</label>
             <input type="range" min={30} max={95} value={form.minSkillLevel}
               onChange={e => setForm(f => ({ ...f, minSkillLevel: +e.target.value }))}
-              style={{ width: '100%', accentColor: '#6366f1', marginTop: 8 }} />
+              style={{ width: '100%', accentColor: '#111111', marginTop: 8 }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
               <span>30% (Beginner)</span><span>60% (Intermediate)</span><span>95% (Expert)</span>
             </div>
@@ -292,7 +292,7 @@ export default function PostJob({ onNavigate }) {
         {/* Eligibility */}
         <div className="card" style={{ marginBottom: 24 }}>
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 18, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={16} color="#6366f1" /> Target Departments
+            <Users size={16} color="#111111" /> Target Departments
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {depts.map(d => (

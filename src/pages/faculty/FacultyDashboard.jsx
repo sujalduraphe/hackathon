@@ -14,10 +14,10 @@ export default function FacultyDashboard({ onNavigate }) {
   const registered = new Set(registrations.map(r => r.programId));
 
   const stats = [
-    { label: 'FDPs', value: count('fdp'), icon: '🎓', color: '#f59e0b' },
-    { label: 'Industrial training & internships', value: count('industrial-training', 'faculty-internship'), icon: '🏭', color: '#10b981' },
-    { label: 'Consultancy & research', value: count('consultancy', 'research'), icon: '🔬', color: '#6366f1' },
-    { label: 'My registrations', value: registrations.length, icon: '📝', color: '#f43f5e' },
+    { label: 'FDPs', value: count('fdp'), color: '#f59e0b' },
+    { label: 'Industrial training & internships', value: count('industrial-training', 'faculty-internship'), color: '#10b981' },
+    { label: 'Consultancy & research', value: count('consultancy', 'research'), color: '#111111' },
+    { label: 'My registrations', value: registrations.length, color: '#f43f5e' },
   ];
 
   const upcoming = [...programs]
@@ -33,25 +33,25 @@ export default function FacultyDashboard({ onNavigate }) {
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
           <div style={{
             width: 56, height: 56, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            background: '#111111',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 700, boxShadow: '0 0 20px rgba(245,158,11,0.4)'
+            fontSize: 22, fontWeight: 700
           }}>
             {user.avatar}
           </div>
           <div>
-            <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}! 🎓</h1>
+            <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}!</h1>
             <p className="page-hero-subtitle">{[user.designation, user.dept, user.organization].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
 
         <div style={{
-          background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.06))',
-          border: '1px solid rgba(245,158,11,0.2)', borderRadius: 16,
+          background: '#ffffff',
+          border: '1px solid #111111', borderRadius: 16,
           padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
         }}>
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>🔔 {programs.length} industry opportunities open to academicians</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{programs.length} industry opportunities open to academicians</div>
             <div style={{ fontSize: 13, color: '#9ca3af' }}>
               {registrations.length ? `${registrations.length} registration${registrations.length === 1 ? '' : 's'}, ${pending} awaiting confirmation` : 'You have not registered for any yet.'}
             </div>
@@ -66,7 +66,6 @@ export default function FacultyDashboard({ onNavigate }) {
       <div className="stat-grid">
         {stats.map((s, i) => (
           <div key={i} className="stat-card">
-            <div style={{ fontSize: 32 }}>{s.icon}</div>
             <div>
               <div className="stat-label">{s.label}</div>
               <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
@@ -79,7 +78,7 @@ export default function FacultyDashboard({ onNavigate }) {
       <div style={{ marginBottom: 28 }}>
         <div className="section-header">
           <div>
-            <div className="section-title">🗓️ Upcoming opportunities</div>
+            <div className="section-title">Upcoming opportunities</div>
             <div className="section-subtitle">Earliest start dates you haven't registered for</div>
           </div>
         </div>
@@ -90,7 +89,6 @@ export default function FacultyDashboard({ onNavigate }) {
             return (
               <div key={p.id} className="job-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate(PAGE_FOR[p.kind])}>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: 26 }}>{k.icon}</div>
                   <div>
                     <span className="badge badge-amber" style={{ marginBottom: 4 }}>{k.label}</span>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{p.title}</div>
@@ -103,7 +101,7 @@ export default function FacultyDashboard({ onNavigate }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
                   <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 600 }}>{p.compensation}</span>
-                  <span style={{ fontSize: 13, color: '#4f46e5', fontWeight: 600 }}>View & register <ArrowRight size={12} /></span>
+                  <span style={{ fontSize: 13, color: '#111111', fontWeight: 600 }}>View & register <ArrowRight size={12} /></span>
                 </div>
               </div>
             );

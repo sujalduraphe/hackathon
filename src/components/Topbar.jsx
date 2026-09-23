@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { LogOut } from 'lucide-react';
-import { ROLE_META } from '../data/store';
 import { useAppState } from '../state/AppState';
 import { DEMO_SWITCH_ENABLED } from '../lib/demo';
 
 const ROLE_LABEL = { student: 'Student', faculty: 'Academician', industry: 'Industry', institution: 'Institution' };
 
 export default function Topbar({ user, onLogout, onSwitched }) {
-  const meta = ROLE_META[user.role];
   const { switchRole } = useAppState();
   const [switching, setSwitching] = useState(null);
   const [error, setError] = useState('');
@@ -27,7 +25,7 @@ export default function Topbar({ user, onLogout, onSwitched }) {
   return (
     <nav className="topbar">
       <div className="topbar-logo">
-        <div className="logo-icon">⚡</div>
+        <div className="logo-icon">S</div>
         <span className="logo-text">SkillBridge</span>
       </div>
 
@@ -41,7 +39,7 @@ export default function Topbar({ user, onLogout, onSwitched }) {
               disabled={Boolean(switching)}
               aria-pressed={user.role === r}
             >
-              {ROLE_META[r].icon} {switching === r ? 'Switching…' : ROLE_LABEL[r]}
+              {switching === r ? 'Switching…' : ROLE_LABEL[r]}
             </button>
           ))}
         </div>
@@ -57,7 +55,7 @@ export default function Topbar({ user, onLogout, onSwitched }) {
         </div>
         <div
           className="topbar-avatar"
-          style={{ background: `linear-gradient(135deg, ${meta.color}, ${meta.color}99)`, borderColor: `${meta.color}60` }}
+          style={{ background: '#111111', borderColor: '#111111' }}
           title={user.email}
         >
           {user.avatar}

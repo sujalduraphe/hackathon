@@ -32,7 +32,7 @@ export default function TalentDiscovery() {
     return (
       <div className="animate-fade-in">
         <div className="page-hero">
-          <h1 className="page-hero-title">🔍 Talent Discovery</h1>
+          <h1 className="page-hero-title">Talent Discovery</h1>
           <p className="page-hero-subtitle">Candidates are ranked against one of your postings.</p>
         </div>
         <div className="card" style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
@@ -62,7 +62,7 @@ export default function TalentDiscovery() {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">🔍 Talent Discovery</h1>
+        <h1 className="page-hero-title">Talent Discovery</h1>
         <p className="page-hero-subtitle">Candidates ranked by verified skill match for a specific opening, with the reason for every score.</p>
       </div>
 

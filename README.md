@@ -11,9 +11,17 @@ One portal for **students**, **industry**, **academicians** and **institutions**
 | Student | Skill assessment (technical, soft skills, aptitude) graded on the server · skill profile and gap analysis against live postings · learning pathways and industry programs for each gap · internships and jobs ranked by an explainable match score · apply and track applications · digital portfolio (resume, verified skills, projects, internships, achievements) · register for training, workshops, mentorship, innovation challenges and live projects |
 | Industry | Post internships and jobs (skills can be extracted from a pasted job description) · candidates ranked for each posting with per-skill reasons · move applicants through the pipeline · view resumes · publish programs (training, workshops, mentorship, challenges, live projects, FDPs, industrial training, faculty internships, consultancy, research, guest lectures) and accept registrations |
 | Academician | Browse and register for FDPs, industrial training, faculty internships, consultancy, collaborative research, guest lectures, workshops and live projects |
-| Institution | Cohort skill gaps vs industry demand · placement funnel · per-student placement readiness · verify students' portfolio items · view resumes (own college only) |
+| Institution | Cohort skill gaps vs industry demand · placement funnel · per-student placement readiness · verify students' portfolio items · view resumes (own college only) · **Market Insights**: import real job-description datasets (CSV) |
 
 **Explainable matching:** for each required skill, readiness = student level ÷ level the employer asks for (capped at 100%); the match score is the average. Every score is shown with its per-skill breakdown. CGPA is an eligibility gate, reported separately.
+
+## Real job-description data
+
+Skill requirements come from two places: postings made on the portal, and **real-world job descriptions imported as CSV** (e.g. a Glassdoor export or a public job-postings dataset you are allowed to use). Each description is run through the same skill extractor, grouped into roles, and blended into students' gap analysis and the institution's skill-gap chart, with the source shown.
+
+- Import from the institution's **Market Insights** page, or `npm --prefix server run import-jds -- file.csv "Source name"`.
+- Recognised columns: `Job Description` (required), `Job Title`, `Company Name`, `Location`, the Glassdoor export layout plus common variants.
+- `server/data/sample-job-descriptions.csv` is a **synthetic** sample in that layout, loaded by `npm run seed`. Glassdoor itself is not scraped: its terms forbid automated collection.
 
 ## Stack
 

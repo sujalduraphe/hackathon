@@ -18,7 +18,7 @@ export default function StudentTracker() {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">📈 Placement Readiness</h1>
+        <h1 className="page-hero-title">Placement Readiness</h1>
         <p className="page-hero-subtitle">
           Readiness is each student's skill fit for the role they are closest to, measured against live postings on the portal.
         </p>

@@ -49,6 +49,7 @@ const SIDEBAR_CONFIG = {
     { label: 'Overview', items: [
       { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { id: 'pri', icon: TrendingUp, label: 'Placement Readiness' },
+      { id: 'market', icon: Target, label: 'Market Insights' },
     ]},
     { label: 'Students', items: [
       { id: 'verification', icon: UserCheck, label: 'Credential Verification' },

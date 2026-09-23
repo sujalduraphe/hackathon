@@ -96,7 +96,7 @@ export default function ManagePrograms() {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">📚 Programs & Collaboration</h1>
+        <h1 className="page-hero-title">Programs & Collaboration</h1>
         <p className="page-hero-subtitle">
           Publish training, workshops, mentorship, innovation challenges and live projects for students, and FDPs, industrial training,
           faculty internships, consultancy, research and guest lectures for academicians.
@@ -187,7 +187,6 @@ export default function ManagePrograms() {
           const k = PROGRAM_KINDS[p.kind];
           return (
             <div key={p.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 26 }}>{k.icon}</span>
               <div style={{ flex: 1, minWidth: 220 }}>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{p.title}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>

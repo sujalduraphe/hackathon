@@ -13,6 +13,10 @@ import Application from './models/Application.js';
 import Assessment from './models/Assessment.js';
 import Program from './models/Program.js';
 import Registration from './models/Registration.js';
+import MarketJob from './models/MarketJob.js';
+import fs from 'fs';
+import { parseCSV } from './utils/csv.js';
+import { rowsToJobs } from './controllers/marketController.js';
 import { CURRENT_USER, JOBS, CANDIDATES } from '../src/data/store.js';
 import { canonicalProfile, canonicalSkill } from '../src/lib/skills.js';
 import { explainMatch } from '../src/lib/matching.js';
@@ -61,7 +65,7 @@ const PROGRAMS = [
 
 /** Wipes the connected database and loads the demo data. Caller manages the connection. */
 export async function runSeed() {
-  await Promise.all([User, Student, Job, Application, Assessment, Program, Registration].map(m => m.deleteMany({})));
+  await Promise.all([User, Student, Job, Application, Assessment, Program, Registration, MarketJob].map(m => m.deleteMany({})));
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
 
   // Talent pool
@@ -140,8 +144,14 @@ export async function runSeed() {
 
   await seedExtra({ recruiters, jobs, programs, passwordHash });
 
+  // Market demand: synthetic job descriptions in Glassdoor CSV format (see data/README.md)
+  const csv = fs.readFileSync(new URL('./data/sample-job-descriptions.csv', import.meta.url), 'utf8');
+  const tpo = await User.findOne({ email: CURRENT_USER.institution.email });
+  const { jobs: marketJobs } = rowsToJobs(parseCSV(csv), { batch: 'sample', source: 'Sample dataset (synthetic, Glassdoor CSV format)', importedBy: tpo._id });
+  await MarketJob.insertMany(marketJobs);
+
   console.log(`Seeded ${await Student.countDocuments()} students, ${await Job.countDocuments()} jobs, ${await Application.countDocuments()} applications, `
-    + `${await Assessment.countDocuments()} assessments, ${programs.length} programs, ${await Registration.countDocuments()} registrations, ${await User.countDocuments()} logins.`);
+    + `${await Assessment.countDocuments()} assessments, ${programs.length} programs, ${await Registration.countDocuments()} registrations, ${await MarketJob.countDocuments()} market job descriptions, ${await User.countDocuments()} logins.`);
   console.log(`Demo logins (password: ${DEMO_PASSWORD}):`);
   console.log(`  student      ${me.email}`);
   console.log(`  industry     rahul.mehta@microsoft.demo`);

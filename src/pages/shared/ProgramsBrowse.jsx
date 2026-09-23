@@ -70,7 +70,6 @@ export default function ProgramsBrowse({ kinds, title, subtitle }) {
           return (
             <div key={p.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 26 }}>{k.icon}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>{p.title}</div>
                   <div style={{ fontSize: 13, color: '#6b7280' }}>{p.organization} · {k.label}</div>
@@ -78,11 +77,11 @@ export default function ProgramsBrowse({ kinds, title, subtitle }) {
               </div>
               {p.description && <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.6 }}>{p.description}</div>}
               <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                {p.startDate && <span>📅 {p.startDate}</span>}
-                {p.duration && <span>⏱ {p.duration}</span>}
-                <span>📍 {p.mode}{p.location ? ` · ${p.location}` : ''}</span>
-                {p.compensation && <span>💰 {p.compensation}</span>}
-                {p.seats && <span>👥 {Math.max(0, p.seats - p.accepted)} of {p.seats} seats left</span>}
+                {p.startDate && <span>{p.startDate}</span>}
+                {p.duration && <span>{p.duration}</span>}
+                <span>{p.mode}{p.location ? ` · ${p.location}` : ''}</span>
+                {p.compensation && <span>{p.compensation}</span>}
+                {p.seats && <span>{Math.max(0, p.seats - p.accepted)} of {p.seats} seats left</span>}
               </div>
               {p.skills?.length > 0 && (
                 <div className="skill-tags">{p.skills.map(s => <span key={s} className="tag">{s}</span>)}</div>

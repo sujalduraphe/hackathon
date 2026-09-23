@@ -1189,3 +1189,99 @@ body {
 .auth-switch { margin-top: 18px; text-align: center; font-size: 13px; color: var(--gray-500); }
 .auth-switch button { border: 0; background: none; color: var(--primary-600); font-weight: 600; cursor: pointer; padding: 0; }
 .auth-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--gray-500); }
+
+/* ============================================
+   THEME: white background, black accent, square corners.
+   Overrides the design tokens above; semantic colours
+   (green = meets bar, amber = pending, red = missing) are kept.
+   ============================================ */
+:root {
+  --primary-50: #f5f5f5;
+  --primary-100: #e5e5e5;
+  --primary-200: #d4d4d4;
+  --primary-300: #a3a3a3;
+  --primary-400: #525252;
+  --primary-500: #111111;
+  --primary-600: #000000;
+  --primary-700: #000000;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fafafa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --border-color: #e5e5e5;
+  --border-hover: #111111;
+
+  --text-primary: #111111;
+
+  --shadow-card: none;
+  --shadow-primary: none;
+  --shadow-emerald: none;
+  --shadow-amber: none;
+  --shadow-rose: none;
+  --shadow-cyan: none;
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+}
+
+body { background: #ffffff; color: #111111; }
+.app-bg, .app-bg::before, .app-bg::after, .orb3 { display: none !important; }
+
+/* square corners everywhere… */
+*, *::before, *::after { border-radius: 0 !important; }
+/* …except avatars and status dots, which stay round */
+[style*="border-radius: 50%"], .topbar-avatar, .timeline-dot, .notif-dot { border-radius: 50% !important; }
+
+/* flat surfaces: a thin border instead of soft shadows and lift-on-hover */
+.card, .stat-card, .job-card, .chart-container, .modal-content, .auth-card, .quiz-question-card, .gap-card {
+  box-shadow: none !important;
+  border: 1px solid #e5e5e5;
+}
+.card:hover, .stat-card:hover, .job-card:hover { transform: none !important; border-color: #111111; }
+
+/* buttons: black primary actions, outlined secondary */
+.btn-primary, .btn-emerald, .btn-amber, .btn-rose, .btn-cyan {
+  background: #111111 !important;
+  color: #ffffff !important;
+  border: 1px solid #111111 !important;
+  box-shadow: none !important;
+}
+.btn-primary:hover, .btn-emerald:hover, .btn-amber:hover, .btn-rose:hover, .btn-cyan:hover {
+  background: #000000 !important;
+  transform: none !important;
+}
+.btn-ghost { background: #ffffff; color: #111111; border: 1px solid #d4d4d4; }
+.btn-ghost:hover { background: #f5f5f5; color: #000000; border-color: #111111; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* navigation */
+.sidebar-link.active { color: #ffffff !important; background: #111111 !important; }
+.sidebar-link.active::before { display: none; }
+.role-tab.active-student, .role-tab.active-faculty, .role-tab.active-industry, .role-tab.active-institution {
+  background: #111111 !important; color: #ffffff !important; box-shadow: none !important;
+}
+.logo-icon { background: #111111 !important; box-shadow: none !important; }
+
+/* inputs */
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #111111 !important; box-shadow: none !important; outline: none; }
+
+/* neutral badges and tags */
+.badge-primary { background: #f5f5f5; color: #111111; border: 1px solid #d4d4d4; }
+.tag:hover { background: #f5f5f5; color: #111111; border-color: #111111; }
+
+/* auth page */
+.auth-tabs button.active { background: #111111; color: #ffffff; box-shadow: none; }
+.auth-roles button.active { border-color: #111111; background: #111111; color: #ffffff; }
+.auth-switch button { color: #111111; text-decoration: underline; }
+
+/* stat cards: monochrome (colour is reserved for status meaning) */
+.stat-value { color: #111111 !important; }
+.stat-icon { background: #f5f5f5 !important; }
+.stat-icon svg { stroke: #111111 !important; }
+.stat-change, .stat-change.up { color: #525252 !important; background: transparent !important; }
+.logo-icon { color: #ffffff !important; font-weight: 700; font-family: var(--font-display); }

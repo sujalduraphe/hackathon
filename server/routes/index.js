@@ -9,6 +9,7 @@ import * as applications from '../controllers/applicationController.js';
 import * as assessments from '../controllers/assessmentController.js';
 import * as analytics from '../controllers/analyticsController.js';
 import * as programs from '../controllers/programController.js';
+import * as market from '../controllers/marketController.js';
 
 const r = Router();
 
@@ -59,6 +60,16 @@ r.post('/programs/:id/register', authenticate, authorize('student', 'faculty'), 
 r.get('/programs/:id/registrations', authenticate, authorize('industry'), ah(programs.programRegistrations));
 r.get('/registrations', authenticate, authorize('student', 'faculty'), ah(programs.myRegistrations));
 r.patch('/registrations/:id', authenticate, authorize('industry'), ah(programs.decide));
+
+// Market demand from imported real-world job descriptions (e.g. Glassdoor exports)
+const csvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, /csv|text|excel/.test(file.mimetype) || file.originalname.toLowerCase().endsWith('.csv')),
+});
+r.get('/market/summary', authenticate, ah(market.summary));
+r.post('/market/import', authenticate, authorize('institution'), csvUpload.single('file'), ah(market.importCSV));
+r.delete('/market/batches/:batch', authenticate, authorize('institution'), ah(market.deleteBatch));
 
 // Institution analytics
 r.get('/analytics/institution', authenticate, authorize('institution'), ah(analytics.institutionOverview));

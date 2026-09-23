@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, ChevronRight, BookOpen, Target } from 'lucide-react';
+import { ChevronRight, BookOpen, Target } from 'lucide-react';
 import { useAppState } from '../../state/AppState';
 import { ROLE_FAMILIES, roleGap } from '../../lib/matching';
 import {
@@ -10,12 +10,12 @@ import {
 const short = n => (n.length > 12 ? n.slice(0, 10) + '..' : n);
 
 export default function SkillGapAnalysis({ onNavigate }) {
-  const { profile, jobs } = useAppState();
+  const { profile, jobs, market } = useAppState();
   const [targetRole, setTargetRole] = useState(ROLE_FAMILIES[0].role);
   const roles = ROLE_FAMILIES.map(f => f.role);
 
   // Benchmarks come from live postings for the chosen role, not a fixed table
-  const { postings, gaps: skillGaps, readiness: overallReadiness } = roleGap(profile.skills, targetRole, jobs);
+  const { postings, marketPostings, gaps: skillGaps, readiness: overallReadiness } = roleGap(profile.skills, targetRole, jobs, market?.roles);
 
   const radarData = skillGaps.map(g => ({ skill: short(g.name), student: g.current, industry: g.target }));
   const gapData = skillGaps.map(g => ({ skill: short(g.name), gap: g.gap, current: g.current })).sort((a, b) => b.gap - a.gap);
@@ -23,7 +23,7 @@ export default function SkillGapAnalysis({ onNavigate }) {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">🎯 Skill Gap Analysis</h1>
+        <h1 className="page-hero-title">Skill Gap Analysis</h1>
         <p className="page-hero-subtitle">Compare your current skills against what employers on the portal are asking for in your target role.</p>
       </div>
 
@@ -43,12 +43,12 @@ export default function SkillGapAnalysis({ onNavigate }) {
 
       {/* Readiness Score Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(16,185,129,0.06))',
-        border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20,
+        background: '#ffffff',
+        border: '1px solid #111111', borderRadius: 20,
         padding: '24px 28px', display: 'flex', alignItems: 'center', gap: 24, marginBottom: 28, flexWrap: 'wrap'
       }}>
         <div style={{ textAlign: 'center', minWidth: 100 }}>
-          <div style={{ fontSize: 52, fontWeight: 800, fontFamily: 'var(--font-display)', color: '#a78bfa', lineHeight: 1 }}>
+          <div style={{ fontSize: 52, fontWeight: 800, fontFamily: 'var(--font-display)', color: '#111111', lineHeight: 1 }}>
             {overallReadiness}%
           </div>
           <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Overall Readiness</div>
@@ -56,18 +56,19 @@ export default function SkillGapAnalysis({ onNavigate }) {
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Target: {targetRole}</div>
           <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-            You are <strong style={{ color: '#a78bfa' }}>{overallReadiness}% ready</strong> for this role.
+            You are <strong style={{ color: '#111111' }}>{overallReadiness}% ready</strong> for this role.
             Focus on closing {skillGaps.filter(g => g.priority === 'critical').length} critical skill gaps to boost your match score significantly.
           </div>
           <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
-            {postings.length > 0
-              ? <>Requirements derived from {postings.length} live posting{postings.length > 1 ? 's' : ''}: {postings.map(p => `${p.company} – ${p.title}`).join('; ')}</>
-              : <>No live postings for this role yet, so a baseline skill set is shown.</>}
+            {postings.length + marketPostings > 0
+              ? <>Requirements derived from {postings.length} live posting{postings.length === 1 ? '' : 's'} on the portal
+                  {marketPostings > 0 && <> and {marketPostings} real-world job description{marketPostings === 1 ? '' : 's'} ({market.batches.map(b => b.source).join(', ')})</>}.</>
+              : <>No postings for this role yet, so a baseline skill set is shown.</>}
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-            <span className="badge badge-rose">🔴 {skillGaps.filter(g => g.priority === 'critical').length} Critical</span>
-            <span className="badge badge-amber">🟡 {skillGaps.filter(g => g.priority === 'recommended').length} Recommended</span>
-            <span className="badge badge-emerald">🟢 {skillGaps.filter(g => g.priority === 'good').length} On Track</span>
+            <span className="badge badge-rose">{skillGaps.filter(g => g.priority === 'critical').length} Critical</span>
+            <span className="badge badge-amber">{skillGaps.filter(g => g.priority === 'recommended').length} Recommended</span>
+            <span className="badge badge-emerald">{skillGaps.filter(g => g.priority === 'good').length} On Track</span>
           </div>
         </div>
         <button className="btn btn-primary" onClick={() => onNavigate('learning')}>
@@ -87,7 +88,7 @@ export default function SkillGapAnalysis({ onNavigate }) {
               <PolarGrid stroke="#e5e7eb" />
               <PolarAngleAxis dataKey="skill" tick={{ fill: '#6b7280', fontSize: 10 }} />
               <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 9 }} />
-              <Radar name="Your Skills" dataKey="student" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} strokeWidth={2} />
+              <Radar name="Your Skills" dataKey="student" stroke="#111111" fill="#111111" fillOpacity={0.3} strokeWidth={2} />
               <Radar name="Industry Benchmark" dataKey="industry" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} strokeDasharray="4 2" />
               <Tooltip
                 contentStyle={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, color: '#111827' }}
@@ -132,7 +133,7 @@ export default function SkillGapAnalysis({ onNavigate }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontWeight: 600, fontSize: 14 }}>{g.name}</span>
               <div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
-                <span style={{ color: '#9ca3af' }}>You: <strong style={{ color: '#6366f1' }}>{g.current}%</strong></span>
+                <span style={{ color: '#9ca3af' }}>You: <strong style={{ color: '#111111' }}>{g.current}%</strong></span>
                 <span style={{ color: '#9ca3af' }}>Target: <strong style={{ color: '#10b981' }}>{g.target}%</strong></span>
                 <span style={{ color: '#9ca3af' }}>Asked in: <strong>{g.postings ? `${g.demand}% of postings` : 'baseline'}</strong></span>
                 {profile.skillSource?.[g.name] && (
@@ -148,7 +149,7 @@ export default function SkillGapAnalysis({ onNavigate }) {
                 <div className="progress-fill progress-primary" style={{ width: `${g.current}%` }} />
               </div>
               <span className={`badge badge-${g.priority === 'critical' ? 'rose' : g.priority === 'recommended' ? 'amber' : 'emerald'}`} style={{ whiteSpace: 'nowrap', fontSize: 10 }}>
-                {g.priority === 'critical' ? '🔴 Critical' : g.priority === 'recommended' ? '🟡 Recommended' : '🟢 On Track'}
+                {g.priority === 'critical' ? 'Critical' : g.priority === 'recommended' ? 'Recommended' : 'On Track'}
               </span>
             </div>
           </div>

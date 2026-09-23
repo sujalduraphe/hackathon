@@ -152,7 +152,7 @@ function ResumeCard({ profile }) {
       {!profile.resume && <div style={{ fontSize: 13, color: '#9ca3af' }}>Upload your resume (PDF, max 2 MB). Skills found in it can be added to your profile, and recruiters can view it.</div>}
       {profile.resume && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <FileText size={18} color="#6366f1" />
+          <FileText size={18} color="#111111" />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>{profile.resume.filename}</div>
             <div style={{ fontSize: 12, color: '#6b7280' }}>{Math.ceil(profile.resume.size / 1024)} KB · uploaded {new Date(profile.resume.uploadedAt).toLocaleDateString()}</div>
@@ -208,7 +208,7 @@ export default function DigitalPortfolio() {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">🏆 Digital Portfolio</h1>
+        <h1 className="page-hero-title">Digital Portfolio</h1>
         <p className="page-hero-subtitle">
           {profile.name} · {[profile.year && `${profile.year} Year`, profile.dept, profile.college].filter(Boolean).join(' · ')}
           {profile.cgpa != null && ` · CGPA ${profile.cgpa}`}
@@ -241,7 +241,6 @@ export default function DigitalPortfolio() {
         {internships.length === 0 && <div style={{ fontSize: 13, color: '#9ca3af' }}>Offers you receive through the portal appear here automatically.</div>}
         {internships.map(a => (
           <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #f3f4f6' }}>
-            <span style={{ fontSize: 22 }}>{jobById[a.jobId].logo}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{jobById[a.jobId].title}</div>
               <div style={{ fontSize: 12, color: '#6b7280' }}>{jobById[a.jobId].company} · offered {a.history.at(-1).at.slice(0, 10)}</div>

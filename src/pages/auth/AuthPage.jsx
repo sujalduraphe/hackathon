@@ -54,7 +54,7 @@ export default function AuthPage() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-brand">
-          <div className="logo-icon">⚡</div>
+          <div className="logo-icon">S</div>
           <div>
             <div className="auth-title">SkillBridge</div>
             <div className="auth-subtitle">Academia–Industry Collaboration Portal</div>

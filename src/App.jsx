@@ -27,6 +27,7 @@ import ProgramsBrowse from './pages/shared/ProgramsBrowse';
 import InstitutionDashboard from './pages/institution/InstitutionDashboard';
 import CredentialVerification from './pages/institution/CredentialVerification';
 import StudentTracker from './pages/institution/StudentTracker';
+import MarketInsights from './pages/institution/MarketInsights';
 
 
 // Student Applications — live statuses from the shared store, so a recruiter's
@@ -42,7 +43,7 @@ function StudentApplications({ onNavigate }) {
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
-        <h1 className="page-hero-title">📋 My Applications</h1>
+        <h1 className="page-hero-title">My Applications</h1>
         <p className="page-hero-subtitle">Track the status of all your internship and job applications.</p>
       </div>
       {mine.length === 0 && (
@@ -58,7 +59,7 @@ function StudentApplications({ onNavigate }) {
           return (
             <div key={a.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: `${a.job.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{a.job.logo}</div>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#111111', color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{a.job.company[0]}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: '#111827' }}>{a.job.title}</div>
                   <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>
@@ -100,7 +101,7 @@ function PageContent({ role, page, onNavigate }) {
     if (page === 'skill-gap') return <SkillGapAnalysis onNavigate={onNavigate} />;
     if (page === 'internships') return <InternshipsJobs onNavigate={onNavigate} />;
     if (page === 'learning') return <LearningPathways onNavigate={onNavigate} />;
-    if (page === 'programs') return <ProgramsBrowse title="📚 Programs & Mentorship" subtitle="Industry training, workshops, mentorship, innovation challenges and live projects you can register for." />;
+    if (page === 'programs') return <ProgramsBrowse title="Programs & Mentorship" subtitle="Industry training, workshops, mentorship, innovation challenges and live projects you can register for." />;
     if (page === 'portfolio') return <DigitalPortfolio />;
     if (page === 'applications') return <StudentApplications onNavigate={onNavigate} />;
     return <StudentDashboard onNavigate={onNavigate} />;
@@ -109,12 +110,12 @@ function PageContent({ role, page, onNavigate }) {
   // Faculty pages
   if (role === 'faculty') {
     if (page === 'dashboard') return <FacultyDashboard onNavigate={onNavigate} />;
-    if (page === 'fdp') return <ProgramsBrowse key="fdp" kinds={['fdp']} title="🎓 Faculty Development Programs" subtitle="FDPs offered by industry partners." />;
-    if (page === 'industrial') return <ProgramsBrowse key="ind" kinds={['industrial-training', 'faculty-internship']} title="🏭 Industrial Training & Faculty Internships" subtitle="Hands-on industry exposure to align teaching with current practice." />;
-    if (page === 'consultancy') return <ProgramsBrowse key="con" kinds={['consultancy']} title="🤝 Consultancy" subtitle="Industry problems looking for academic expertise." />;
-    if (page === 'research') return <ProgramsBrowse key="res" kinds={['research']} title="🔬 Collaborative Research" subtitle="Joint research projects with industry." />;
-    if (page === 'guest-lectures') return <ProgramsBrowse key="gl" kinds={['guest-lecture']} title="🎤 Guest Lectures" subtitle="Industry experts available to lecture at your institution. Register to request a session." />;
-    if (page === 'workshops') return <ProgramsBrowse key="ws" kinds={['workshop', 'live-project']} title="🛠️ Workshops & Live Projects" subtitle="Workshops and live industry projects open to academicians." />;
+    if (page === 'fdp') return <ProgramsBrowse key="fdp" kinds={['fdp']} title="Faculty Development Programs" subtitle="FDPs offered by industry partners." />;
+    if (page === 'industrial') return <ProgramsBrowse key="ind" kinds={['industrial-training', 'faculty-internship']} title="Industrial Training & Faculty Internships" subtitle="Hands-on industry exposure to align teaching with current practice." />;
+    if (page === 'consultancy') return <ProgramsBrowse key="con" kinds={['consultancy']} title="Consultancy" subtitle="Industry problems looking for academic expertise." />;
+    if (page === 'research') return <ProgramsBrowse key="res" kinds={['research']} title="Collaborative Research" subtitle="Joint research projects with industry." />;
+    if (page === 'guest-lectures') return <ProgramsBrowse key="gl" kinds={['guest-lecture']} title="Guest Lectures" subtitle="Industry experts available to lecture at your institution. Register to request a session." />;
+    if (page === 'workshops') return <ProgramsBrowse key="ws" kinds={['workshop', 'live-project']} title="Workshops & Live Projects" subtitle="Workshops and live industry projects open to academicians." />;
     return <FacultyDashboard onNavigate={onNavigate} />;
   }
 
@@ -132,6 +133,7 @@ function PageContent({ role, page, onNavigate }) {
     if (page === 'dashboard') return <InstitutionDashboard onNavigate={onNavigate} />;
     if (page === 'pri') return <StudentTracker />;
     if (page === 'verification') return <CredentialVerification />;
+    if (page === 'market') return <MarketInsights />;
     return <InstitutionDashboard onNavigate={onNavigate} />;
   }
 

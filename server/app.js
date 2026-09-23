@@ -26,7 +26,7 @@ app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.p
 app.use((err, _req, res, _next) => {
   // malformed ObjectId in a URL or body
   if (err.name === 'CastError') return res.status(404).json({ error: 'Not found' });
-  if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File is larger than 2 MB' });
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File is too large' });
   if (err.name === 'ValidationError') return res.status(422).json({ error: err.message });
   if (err.code === 11000) return res.status(409).json({ error: 'Duplicate record' });
   const status = err.status || 500;

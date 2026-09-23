@@ -76,7 +76,7 @@ export default function SkillAssessment({ onNavigate }) {
     return (
       <div className="animate-fade-in">
         <div className="page-hero">
-          <h1 className="page-hero-title">🧠 Skill Assessment</h1>
+          <h1 className="page-hero-title">Skill Assessment</h1>
           <p className="page-hero-subtitle">
             Take category-wise assessments to evaluate your skills. Results update your profile and improve job matching.
           </p>
@@ -84,10 +84,10 @@ export default function SkillAssessment({ onNavigate }) {
 
         <div className="grid-3">
           {[
-            { key: 'Core CS', icon: '⚙️', desc: 'Data Structures, Algorithms, OS, DBMS fundamentals', color: '#6366f1', difficulty: 'Medium', time: '~8 min' },
-            { key: 'Python & ML', icon: '🐍', desc: 'Python programming, NumPy, Pandas, Machine Learning', color: '#10b981', difficulty: 'Medium', time: '~8 min' },
-            { key: 'Web Development', icon: '🌐', desc: 'React, REST APIs, HTTP, JavaScript, CSS', color: '#f59e0b', difficulty: 'Easy-Medium', time: '~8 min' },
-            { key: 'Soft Skills & Aptitude', icon: '🤝', desc: 'Communication, teamwork, leadership scenarios and quantitative aptitude', color: '#06b6d4', difficulty: 'Easy-Medium', time: '~6 min' },
+            { key: 'Core CS', desc: 'Data Structures, Algorithms, OS, DBMS fundamentals', color: '#111111', difficulty: 'Medium', time: '~8 min' },
+            { key: 'Python & ML', desc: 'Python programming, NumPy, Pandas, Machine Learning', color: '#10b981', difficulty: 'Medium', time: '~8 min' },
+            { key: 'Web Development', desc: 'React, REST APIs, HTTP, JavaScript, CSS', color: '#f59e0b', difficulty: 'Easy-Medium', time: '~8 min' },
+            { key: 'Soft Skills & Aptitude', desc: 'Communication, teamwork, leadership scenarios and quantitative aptitude', color: '#06b6d4', difficulty: 'Easy-Medium', time: '~6 min' },
           ].map(cat => (
             <div
               key={cat.key}
@@ -95,7 +95,6 @@ export default function SkillAssessment({ onNavigate }) {
               onClick={() => startQuiz(cat.key)}
               style={{ cursor: 'pointer', textAlign: 'center', padding: 32, transition: 'all 0.3s' }}
             >
-              <div style={{ fontSize: 48, marginBottom: 16 }}>{cat.icon}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{cat.key}</div>
               <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 12, lineHeight: 1.6 }}>{cat.desc}</div>
               <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 16 }}>
@@ -106,7 +105,7 @@ export default function SkillAssessment({ onNavigate }) {
                 <span className="badge badge-gray"><Clock size={10} /> {cat.time}</span>
                 <span className="badge badge-gray">{QUIZ_QUESTIONS[cat.key].length} Questions</span>
               </div>
-              <button className="btn btn-sm" style={{ background: `linear-gradient(135deg, ${cat.color}, ${cat.color}cc)`, color: 'white', width: '100%' }}>
+              <button className="btn btn-sm" style={{ background: '#111111', color: 'white', width: '100%' }}>
                 Start Assessment <ChevronRight size={14} />
               </button>
             </div>
@@ -115,7 +114,7 @@ export default function SkillAssessment({ onNavigate }) {
 
         {/* Completed */}
         <div style={{ marginTop: 32 }}>
-          <div className="section-title" style={{ marginBottom: 16 }}>✅ Completed Assessments</div>
+          <div className="section-title" style={{ marginBottom: 16 }}>Completed Assessments</div>
           {assessments.length === 0 && (
             <div style={{ fontSize: 13, color: '#9ca3af' }}>
               None yet. Your profile currently uses self-declared skill levels; take an assessment to replace them with verified scores.
@@ -142,7 +141,6 @@ export default function SkillAssessment({ onNavigate }) {
     const passed = score >= 60;
     return (
       <div className="animate-fade-in" style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>{passed ? '🏆' : '📖'}</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
           {passed ? 'Great Job!' : 'Keep Practicing!'}
         </h2>
@@ -163,7 +161,6 @@ export default function SkillAssessment({ onNavigate }) {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 24 }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{score >= 80 ? '🌟' : score >= 60 ? '👍' : '📚'}</div>
               <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
                 {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Needs Work'}
               </div>
@@ -212,7 +209,7 @@ export default function SkillAssessment({ onNavigate }) {
       {/* Header */}
       <div className="quiz-header">
         <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
-          🧠 {selectedCategory} · Question {currentQ + 1} of {questions.length}
+          {selectedCategory} · Question {currentQ + 1} of {questions.length}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -221,7 +218,7 @@ export default function SkillAssessment({ onNavigate }) {
                 width: 24, height: 4, borderRadius: 2,
                 background: i < currentQ
                   ? (answers[i] === questions[i].correct ? '#10b981' : '#f43f5e')
-                  : i === currentQ ? '#6366f1' : 'rgba(255,255,255,0.1)'
+                  : i === currentQ ? '#111111' : 'rgba(255,255,255,0.1)'
               }} />
             ))}
           </div>
@@ -266,10 +263,10 @@ export default function SkillAssessment({ onNavigate }) {
         {revealed && (
           <div style={{
             marginTop: 16, padding: '12px 16px', borderRadius: 10,
-            background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
+            background: 'rgba(17,17,17,0.08)', border: '1px solid #111111',
             fontSize: 13, color: '#374151', lineHeight: 1.6
           }}>
-            💡 <strong>Explanation:</strong> {q.explanation}
+            <strong>Explanation:</strong> {q.explanation}
           </div>
         )}
       </div>

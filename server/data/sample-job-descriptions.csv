@@ -1,0 +1,467 @@
+"Job Title","Salary Estimate","Job Description","Rating","Company Name","Location","Size","Industry"
+"Data Scientist","₹12L - ₹17L (Employer est.)","About the role: Ganga Cloud Services is hiring a Data Scientist to join our growing team.
+
+What we are looking for:
+- Solid SQL skills to query large datasets are required.
+- Good communication skills to present insights to stakeholders.
+- Strong Python and hands-on experience with machine learning (scikit-learn) are required.
+- Familiarity with Spark for big data is preferred.
+- Deep learning with TensorFlow or PyTorch is a plus.
+- Experience with pandas and exploratory data analysis is expected.
+
+You will work with cross-functional teams and own features end to end.","3.8","Ganga Cloud Services
+4.6","Gurugram, Haryana","1001 to 5000 employees","Healthcare"
+"Data Scientist","₹8L - ₹14L (Employer est.)","About the role: Ganga Cloud Services is hiring a Data Scientist to join our growing team.
+
+What we are looking for:
+- Good communication skills to present insights to stakeholders.
+- Solid SQL skills to query large datasets are required.
+- Deep learning with TensorFlow or PyTorch is a plus.
+- Familiarity with Spark for big data is preferred.
+- Experience with pandas and exploratory data analysis is expected.
+- Strong Python and hands-on experience with machine learning (scikit-learn) are required.
+
+You will work with cross-functional teams and own features end to end.","3.6","Ganga Cloud Services
+3.7","Noida, Uttar Pradesh","1001 to 5000 employees","Financial Services"
+"Data Scientist","₹13L - ₹18L (Employer est.)","About the role: Kiran EdTech is hiring a Data Scientist to join our growing team.
+
+What we are looking for:
+- Solid SQL skills to query large datasets are required.
+- Experience with pandas and exploratory data analysis is expected.
+- Familiarity with Spark for big data is preferred.
+- Good communication skills to present insights to stakeholders.
+- Strong Python and hands-on experience with machine learning (scikit-learn) are required.
+
+You will work with cross-functional teams and own features end to end.","3.7","Kiran EdTech
+4.3","Chennai, Tamil Nadu","51 to 200 employees","Financial Services"
+"Data Scientist","₹5L - ₹13L (Employer est.)","About the role: Orbit Mobility is hiring a Data Scientist to join our growing team.
+
+What we are looking for:
+- Deep learning with TensorFlow or PyTorch is a plus.
+- Solid SQL skills to query large datasets are required.
+- Strong Python and hands-on experience with machine learning (scikit-learn) are required.
+- Familiarity with Spark for big data is preferred.
+- Experience with pandas and exploratory data analysis is expected.
+
+You will work with cross-functional teams and own features end to end.","3.5","Orbit Mobility
+4.5","Gurugram, Haryana","51 to 200 employees","Retail"
+"Machine Learning Engineer","₹6L - ₹10L (Employer est.)","About the role: Ganga Cloud Services is hiring a Machine Learning Engineer to join our growing team.
+
+What we are looking for:
+- Working knowledge of AWS is expected.
+- Strong problem solving and SQL skills.
+- Must have strong Python and machine learning fundamentals.
+- Experience with TensorFlow or PyTorch is mandatory.
+- Exposure to Kubernetes is a plus.
+- Hands-on experience deploying models with Docker is required.
+
+You will work with cross-functional teams and own features end to end.","4.5","Ganga Cloud Services
+3.7","Noida, Uttar Pradesh","1001 to 5000 employees","Information Technology"
+"Machine Learning Engineer","₹5L - ₹12L (Employer est.)","About the role: Ganga Cloud Services is hiring a Machine Learning Engineer to join our growing team.
+
+What we are looking for:
+- Working knowledge of AWS is expected.
+- Strong problem solving and SQL skills.
+- Exposure to Kubernetes is a plus.
+- Hands-on experience deploying models with Docker is required.
+
+You will work with cross-functional teams and own features end to end.","4.5","Ganga Cloud Services
+4.1","Pune, Maharashtra","1001 to 5000 employees","Financial Services"
+"Machine Learning Engineer","₹6L - ₹13L (Employer est.)","About the role: Mitra Insurance Tech is hiring a Machine Learning Engineer to join our growing team.
+
+What we are looking for:
+- Working knowledge of AWS is expected.
+- Must have strong Python and machine learning fundamentals.
+- Exposure to Kubernetes is a plus.
+- Strong problem solving and SQL skills.
+- Hands-on experience deploying models with Docker is required.
+- Experience with TensorFlow or PyTorch is mandatory.
+
+You will work with cross-functional teams and own features end to end.","4.0","Mitra Insurance Tech
+3.8","Chennai, Tamil Nadu","51 to 200 employees","Healthcare"
+"Machine Learning Engineer","₹9L - ₹13L (Employer est.)","About the role: Kiran EdTech is hiring a Machine Learning Engineer to join our growing team.
+
+What we are looking for:
+- Strong problem solving and SQL skills.
+- Working knowledge of AWS is expected.
+- Hands-on experience deploying models with Docker is required.
+- Must have strong Python and machine learning fundamentals.
+- Exposure to Kubernetes is a plus.
+- Experience with TensorFlow or PyTorch is mandatory.
+
+You will work with cross-functional teams and own features end to end.","3.9","Kiran EdTech
+3.4","Mumbai, Maharashtra","51 to 200 employees","Information Technology"
+"Machine Learning Engineer","₹13L - ₹23L (Employer est.)","About the role: Kiran EdTech is hiring a Machine Learning Engineer to join our growing team.
+
+What we are looking for:
+- Must have strong Python and machine learning fundamentals.
+- Working knowledge of AWS is expected.
+- Hands-on experience deploying models with Docker is required.
+- Exposure to Kubernetes is a plus.
+- Strong problem solving and SQL skills.
+- Experience with TensorFlow or PyTorch is mandatory.
+
+You will work with cross-functional teams and own features end to end.","4.2","Kiran EdTech
+3.9","Bengaluru, Karnataka","1001 to 5000 employees","Healthcare"
+"Full Stack Developer","₹8L - ₹13L (Employer est.)","About the role: Orbit Mobility is hiring a Full Stack Developer to join our growing team.
+
+What we are looking for:
+- Strong JavaScript and React experience is required.
+- Familiarity with AWS or Azure is a plus.
+- Must be proficient in Node.js and building REST APIs.
+- Experience with MongoDB or SQL databases.
+- Good understanding of HTML/CSS.
+- Experience with Git and code reviews.
+- TypeScript is preferred.
+
+You will work with cross-functional teams and own features end to end.","3.7","Orbit Mobility
+3.7","Gurugram, Haryana","201 to 500 employees","Retail"
+"Full Stack Developer","₹9L - ₹18L (Employer est.)","About the role: Kiran EdTech is hiring a Full Stack Developer to join our growing team.
+
+What we are looking for:
+- Familiarity with AWS or Azure is a plus.
+- Strong JavaScript and React experience is required.
+- Good understanding of HTML/CSS.
+- TypeScript is preferred.
+- Experience with MongoDB or SQL databases.
+- Experience with Git and code reviews.
+- Must be proficient in Node.js and building REST APIs.
+
+You will work with cross-functional teams and own features end to end.","4.1","Kiran EdTech
+3.8","Pune, Maharashtra","201 to 500 employees","Retail"
+"Full Stack Developer","₹12L - ₹17L (Employer est.)","About the role: Ganga Cloud Services is hiring a Full Stack Developer to join our growing team.
+
+What we are looking for:
+- TypeScript is preferred.
+- Experience with MongoDB or SQL databases.
+- Familiarity with AWS or Azure is a plus.
+- Good understanding of HTML/CSS.
+- Must be proficient in Node.js and building REST APIs.
+- Experience with Git and code reviews.
+- Strong JavaScript and React experience is required.
+
+You will work with cross-functional teams and own features end to end.","3.5","Ganga Cloud Services
+4.4","Noida, Uttar Pradesh","201 to 500 employees","Financial Services"
+"Full Stack Developer","₹4L - ₹12L (Employer est.)","About the role: Sankhya Data is hiring a Full Stack Developer to join our growing team.
+
+What we are looking for:
+- Must be proficient in Node.js and building REST APIs.
+- Experience with MongoDB or SQL databases.
+- Familiarity with AWS or Azure is a plus.
+- Experience with Git and code reviews.
+- Good understanding of HTML/CSS.
+- TypeScript is preferred.
+- Strong JavaScript and React experience is required.
+
+You will work with cross-functional teams and own features end to end.","4.2","Sankhya Data
+3.5","Mumbai, Maharashtra","1001 to 5000 employees","Financial Services"
+"Full Stack Developer","₹14L - ₹23L (Employer est.)","About the role: Prithvi Logistics is hiring a Full Stack Developer to join our growing team.
+
+What we are looking for:
+- Good understanding of HTML/CSS.
+- Must be proficient in Node.js and building REST APIs.
+- Experience with MongoDB or SQL databases.
+- Familiarity with AWS or Azure is a plus.
+- Experience with Git and code reviews.
+- TypeScript is preferred.
+- Strong JavaScript and React experience is required.
+
+You will work with cross-functional teams and own features end to end.","3.7","Prithvi Logistics
+3.7","Hyderabad, Telangana","201 to 500 employees","Retail"
+"Frontend Developer","₹6L - ₹11L (Employer est.)","About the role: Nimbus Analytics is hiring a Frontend Developer to join our growing team.
+
+What we are looking for:
+- Good communication and teamwork.
+- Strong HTML/CSS and responsive design skills.
+- TypeScript experience is preferred.
+- Must have experience integrating REST APIs.
+
+You will work with cross-functional teams and own features end to end.","4.3","Nimbus Analytics
+4.5","Pune, Maharashtra","1001 to 5000 employees","Information Technology"
+"Frontend Developer","₹12L - ₹15L (Employer est.)","About the role: Orbit Mobility is hiring a Frontend Developer to join our growing team.
+
+What we are looking for:
+- Strong HTML/CSS and responsive design skills.
+- TypeScript experience is preferred.
+- Must have experience integrating REST APIs.
+- Familiarity with Git workflows.
+- Expert in React and JavaScript is required.
+
+You will work with cross-functional teams and own features end to end.","4.0","Orbit Mobility
+3.4","Mumbai, Maharashtra","51 to 200 employees","Retail"
+"Frontend Developer","₹10L - ₹17L (Employer est.)","About the role: Kavach Systems is hiring a Frontend Developer to join our growing team.
+
+What we are looking for:
+- Must have experience integrating REST APIs.
+- Strong HTML/CSS and responsive design skills.
+- Expert in React and JavaScript is required.
+- Good communication and teamwork.
+
+You will work with cross-functional teams and own features end to end.","4.2","Kavach Systems
+3.9","Chennai, Tamil Nadu","201 to 500 employees","Retail"
+"Backend Engineer","₹7L - ₹11L (Employer est.)","About the role: Kiran EdTech is hiring a Backend Engineer to join our growing team.
+
+What we are looking for:
+- Solid data structures and algorithms fundamentals.
+- Experience with SQL and Redis.
+- Experience with Docker and AWS is preferred.
+- Hands-on experience designing microservices.
+- Strong Java and Spring Boot experience is required.
+- Understanding of system design at scale.
+
+You will work with cross-functional teams and own features end to end.","4.2","Kiran EdTech
+4.3","Hyderabad, Telangana","51 to 200 employees","Healthcare"
+"Backend Engineer","₹8L - ₹14L (Employer est.)","About the role: Kiran EdTech is hiring a Backend Engineer to join our growing team.
+
+What we are looking for:
+- Solid data structures and algorithms fundamentals.
+- Strong Java and Spring Boot experience is required.
+- Experience with SQL and Redis.
+- Familiarity with Kafka is a plus.
+- Experience with Docker and AWS is preferred.
+- Understanding of system design at scale.
+- Hands-on experience designing microservices.
+
+You will work with cross-functional teams and own features end to end.","4.2","Kiran EdTech
+3.5","Pune, Maharashtra","51 to 200 employees","Information Technology"
+"Backend Engineer","₹11L - ₹21L (Employer est.)","About the role: Nimbus Analytics is hiring a Backend Engineer to join our growing team.
+
+What we are looking for:
+- Familiarity with Kafka is a plus.
+- Strong Java and Spring Boot experience is required.
+- Understanding of system design at scale.
+- Experience with SQL and Redis.
+- Experience with Docker and AWS is preferred.
+- Hands-on experience designing microservices.
+- Solid data structures and algorithms fundamentals.
+
+You will work with cross-functional teams and own features end to end.","4.3","Nimbus Analytics
+4.6","Gurugram, Haryana","1001 to 5000 employees","Healthcare"
+"Software Engineer (SDE-1)","₹4L - ₹8L (Employer est.)","About the role: Kavach Systems is hiring a Software Engineer (SDE-1) to join our growing team.
+
+What we are looking for:
+- Experience with SQL databases.
+- Understanding of system design basics.
+- Strong data structures and algorithms skills are mandatory.
+- Strong problem solving and communication.
+- Familiarity with Git.
+
+You will work with cross-functional teams and own features end to end.","3.6","Kavach Systems
+3.7","Chennai, Tamil Nadu","201 to 500 employees","Retail"
+"Software Engineer (SDE-1)","₹13L - ₹23L (Employer est.)","About the role: Kiran EdTech is hiring a Software Engineer (SDE-1) to join our growing team.
+
+What we are looking for:
+- Strong problem solving and communication.
+- Proficient in Java, C++ or Python.
+- Strong data structures and algorithms skills are mandatory.
+- Experience with SQL databases.
+- Understanding of system design basics.
+- Familiarity with Git.
+
+You will work with cross-functional teams and own features end to end.","4.1","Kiran EdTech
+4.0","Hyderabad, Telangana","51 to 200 employees","Retail"
+"Software Engineer (SDE-1)","₹11L - ₹14L (Employer est.)","About the role: Orbit Mobility is hiring a Software Engineer (SDE-1) to join our growing team.
+
+What we are looking for:
+- Familiarity with Git.
+- Strong data structures and algorithms skills are mandatory.
+- Experience with SQL databases.
+- Proficient in Java, C++ or Python.
+- Strong problem solving and communication.
+- Understanding of system design basics.
+
+You will work with cross-functional teams and own features end to end.","4.3","Orbit Mobility
+4.1","Chennai, Tamil Nadu","51 to 200 employees","Healthcare"
+"Software Engineer (SDE-1)","₹13L - ₹23L (Employer est.)","About the role: Mitra Insurance Tech is hiring a Software Engineer (SDE-1) to join our growing team.
+
+What we are looking for:
+- Familiarity with Git.
+- Strong data structures and algorithms skills are mandatory.
+- Understanding of system design basics.
+- Proficient in Java, C++ or Python.
+- Strong problem solving and communication.
+- Experience with SQL databases.
+
+You will work with cross-functional teams and own features end to end.","4.2","Mitra Insurance Tech
+3.7","Bengaluru, Karnataka","1001 to 5000 employees","Information Technology"
+"Data Analyst","₹6L - ₹13L (Employer est.)","About the role: Nimbus Analytics is hiring a Data Analyst to join our growing team.
+
+What we are looking for:
+- Experience with pandas and dashboards.
+- Must know Python or Excel for data analysis.
+- Knowledge of statistics and problem solving.
+- Strong SQL is required.
+- Excellent communication to explain findings to business teams.
+
+You will work with cross-functional teams and own features end to end.","4.5","Nimbus Analytics
+4.2","Noida, Uttar Pradesh","1001 to 5000 employees","Information Technology"
+"Data Analyst","₹4L - ₹9L (Employer est.)","About the role: Setu Fintech is hiring a Data Analyst to join our growing team.
+
+What we are looking for:
+- Strong SQL is required.
+- Knowledge of statistics and problem solving.
+- Must know Python or Excel for data analysis.
+- Experience with pandas and dashboards.
+- Excellent communication to explain findings to business teams.
+
+You will work with cross-functional teams and own features end to end.","4.0","Setu Fintech
+4.0","Chennai, Tamil Nadu","51 to 200 employees","Financial Services"
+"Data Analyst","₹13L - ₹23L (Employer est.)","About the role: Tarang Labs is hiring a Data Analyst to join our growing team.
+
+What we are looking for:
+- Must know Python or Excel for data analysis.
+- Experience with pandas and dashboards.
+- Strong SQL is required.
+- Excellent communication to explain findings to business teams.
+- Knowledge of statistics and problem solving.
+
+You will work with cross-functional teams and own features end to end.","4.1","Tarang Labs
+4.0","Gurugram, Haryana","51 to 200 employees","Financial Services"
+"Data Analyst","₹13L - ₹18L (Employer est.)","About the role: Kavach Systems is hiring a Data Analyst to join our growing team.
+
+What we are looking for:
+- Knowledge of statistics and problem solving.
+- Must know Python or Excel for data analysis.
+- Experience with pandas and dashboards.
+- Excellent communication to explain findings to business teams.
+- Strong SQL is required.
+
+You will work with cross-functional teams and own features end to end.","4.6","Kavach Systems
+3.5","Noida, Uttar Pradesh","51 to 200 employees","Healthcare"
+"Business Analyst","₹14L - ₹18L (Employer est.)","About the role: Mitra Insurance Tech is hiring a Business Analyst to join our growing team.
+
+What we are looking for:
+- Familiarity with Python is a plus.
+- Problem solving and analytical thinking are mandatory.
+- Strong SQL and data analysis skills required.
+
+You will work with cross-functional teams and own features end to end.","3.9","Mitra Insurance Tech
+4.4","Gurugram, Haryana","1001 to 5000 employees","Healthcare"
+"Business Analyst","₹10L - ₹16L (Employer est.)","About the role: Sankhya Data is hiring a Business Analyst to join our growing team.
+
+What we are looking for:
+- Familiarity with Python is a plus.
+- Problem solving and analytical thinking are mandatory.
+- Excellent communication and stakeholder management.
+- Strong SQL and data analysis skills required.
+
+You will work with cross-functional teams and own features end to end.","3.5","Sankhya Data
+3.4","Pune, Maharashtra","1001 to 5000 employees","Financial Services"
+"Business Analyst","₹10L - ₹19L (Employer est.)","About the role: Sankhya Data is hiring a Business Analyst to join our growing team.
+
+What we are looking for:
+- Strong SQL and data analysis skills required.
+- Familiarity with Python is a plus.
+- Excellent communication and stakeholder management.
+- Problem solving and analytical thinking are mandatory.
+
+You will work with cross-functional teams and own features end to end.","3.8","Sankhya Data
+3.9","Pune, Maharashtra","1001 to 5000 employees","Financial Services"
+"Business Analyst","₹10L - ₹17L (Employer est.)","About the role: Tarang Labs is hiring a Business Analyst to join our growing team.
+
+What we are looking for:
+- Problem solving and analytical thinking are mandatory.
+- Strong SQL and data analysis skills required.
+- Familiarity with Python is a plus.
+- Excellent communication and stakeholder management.
+
+You will work with cross-functional teams and own features end to end.","4.3","Tarang Labs
+4.3","Pune, Maharashtra","201 to 500 employees","Financial Services"
+"Business Analyst","₹5L - ₹8L (Employer est.)","About the role: Prithvi Logistics is hiring a Business Analyst to join our growing team.
+
+What we are looking for:
+- Excellent communication and stakeholder management.
+- Strong SQL and data analysis skills required.
+- Familiarity with Python is a plus.
+- Problem solving and analytical thinking are mandatory.
+
+You will work with cross-functional teams and own features end to end.","3.5","Prithvi Logistics
+3.7","Gurugram, Haryana","51 to 200 employees","Retail"
+"Embedded Software Engineer","₹6L - ₹13L (Employer est.)","About the role: Kavach Systems is hiring a Embedded Software Engineer to join our growing team.
+
+What we are looking for:
+- Experience with microcontrollers and RTOS.
+- Knowledge of signal processing is a plus.
+- Strong C++ and embedded systems experience is required.
+- Good problem solving.
+- Python scripting for test automation is preferred.
+
+You will work with cross-functional teams and own features end to end.","3.7","Kavach Systems
+4.1","Gurugram, Haryana","1001 to 5000 employees","Retail"
+"Embedded Software Engineer","₹12L - ₹19L (Employer est.)","About the role: Kiran EdTech is hiring a Embedded Software Engineer to join our growing team.
+
+What we are looking for:
+- Knowledge of signal processing is a plus.
+- Strong C++ and embedded systems experience is required.
+- Experience with microcontrollers and RTOS.
+
+You will work with cross-functional teams and own features end to end.","3.8","Kiran EdTech
+3.5","Pune, Maharashtra","1001 to 5000 employees","Financial Services"
+"Embedded Software Engineer","₹5L - ₹9L (Employer est.)","About the role: Orbit Mobility is hiring a Embedded Software Engineer to join our growing team.
+
+What we are looking for:
+- Python scripting for test automation is preferred.
+- Strong C++ and embedded systems experience is required.
+- Knowledge of signal processing is a plus.
+- Good problem solving.
+- Experience with microcontrollers and RTOS.
+
+You will work with cross-functional teams and own features end to end.","3.9","Orbit Mobility
+3.9","Chennai, Tamil Nadu","201 to 500 employees","Information Technology"
+"Embedded Software Engineer","₹5L - ₹11L (Employer est.)","About the role: Kiran EdTech is hiring a Embedded Software Engineer to join our growing team.
+
+What we are looking for:
+- Strong C++ and embedded systems experience is required.
+- Experience with microcontrollers and RTOS.
+- Python scripting for test automation is preferred.
+
+You will work with cross-functional teams and own features end to end.","3.4","Kiran EdTech
+4.6","Gurugram, Haryana","201 to 500 employees","Financial Services"
+"Embedded Software Engineer","₹4L - ₹8L (Employer est.)","About the role: Tarang Labs is hiring a Embedded Software Engineer to join our growing team.
+
+What we are looking for:
+- Knowledge of signal processing is a plus.
+- Good problem solving.
+- Experience with microcontrollers and RTOS.
+- Python scripting for test automation is preferred.
+
+You will work with cross-functional teams and own features end to end.","4.2","Tarang Labs
+3.6","Bengaluru, Karnataka","1001 to 5000 employees","Retail"
+"Research Engineer","₹7L - ₹16L (Employer est.)","About the role: Vistara Health Tech is hiring a Research Engineer to join our growing team.
+
+What we are looking for:
+- C++ for performance-critical code is a plus.
+- Ability to read and implement research papers.
+- Experience with signal processing or computer vision.
+- Strong Python and deep learning experience required.
+
+You will work with cross-functional teams and own features end to end.","4.6","Vistara Health Tech
+4.5","Gurugram, Haryana","201 to 500 employees","Information Technology"
+"Research Engineer","₹12L - ₹21L (Employer est.)","About the role: Setu Fintech is hiring a Research Engineer to join our growing team.
+
+What we are looking for:
+- Ability to read and implement research papers.
+- Experience with signal processing or computer vision.
+- C++ for performance-critical code is a plus.
+- Strong Python and deep learning experience required.
+
+You will work with cross-functional teams and own features end to end.","3.8","Setu Fintech
+4.1","Noida, Uttar Pradesh","201 to 500 employees","Financial Services"
+"Research Engineer","₹12L - ₹18L (Employer est.)","About the role: Sankhya Data is hiring a Research Engineer to join our growing team.
+
+What we are looking for:
+- C++ for performance-critical code is a plus.
+- Ability to read and implement research papers.
+- Strong Python and deep learning experience required.
+
+You will work with cross-functional teams and own features end to end.","4.1","Sankhya Data
+3.4","Bengaluru, Karnataka","201 to 500 employees","Healthcare"
+"Research Engineer","₹4L - ₹10L (Employer est.)","About the role: Ganga Cloud Services is hiring a Research Engineer to join our growing team.
+
+What we are looking for:
+- C++ for performance-critical code is a plus.
+- Ability to read and implement research papers.
+- Strong Python and deep learning experience required.
+
+You will work with cross-functional teams and own features end to end.","3.7","Ganga Cloud Services
+4.5","Gurugram, Haryana","1001 to 5000 employees","Retail"
