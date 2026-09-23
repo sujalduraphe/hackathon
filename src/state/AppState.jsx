@@ -4,6 +4,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, tokenStore, setUnauthorizedHandler } from '../lib/api';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from '../lib/demo';
 
 const AppStateContext = createContext(null);
 
@@ -73,6 +74,13 @@ export function AppStateProvider({ children }) {
       await startSession(u);
     },
     logout,
+
+    // demo: log in as the seeded account for a role
+    async switchRole(role) {
+      const { token, user: u } = await api('/auth/login', { method: 'POST', body: { email: DEMO_ACCOUNTS[role], password: DEMO_PASSWORD } });
+      tokenStore.set(token);
+      await startSession(u);
+    },
 
     // student
     async submitAssessment(category, answers) {

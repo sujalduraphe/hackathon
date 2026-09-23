@@ -149,7 +149,7 @@ function Portal() {
   const role = user.role;
   return (
     <div className="app-shell">
-      <Topbar user={user} onLogout={() => { setPage('dashboard'); logout(); }} />
+      <Topbar user={user} onLogout={() => { setPage('dashboard'); logout(); }} onSwitched={() => setPage('dashboard')} />
       <div className="main-layout">
         <Sidebar role={role} activePage={page} onPageChange={setPage} />
         <main className="main-content">

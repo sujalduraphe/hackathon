@@ -45,6 +45,8 @@ Password for all: `demo1234`
 | Institution (NITK) | placement.nitk@edu.in |
 | Institution (VIT) | placement.vit@edu.in |
 
+The top bar has **Student / Industry / Academician / Institution** tabs that log in as the demo account for that role, handy for demos. It's a real login, so the server's permission checks still apply. Set `VITE_DEMO_SWITCH=false` when building to hide it.
+
 ## Deploy
 
 - **Database:** MongoDB Atlas (free M0 cluster). Allow network access from anywhere (`0.0.0.0/0`), since Render's free tier has no fixed IP.
