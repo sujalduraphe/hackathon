@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, X, CheckCircle, Briefcase, Users, Tag, Wand2 } from 'lucide-react';
 import { useAppState } from '../../state/AppState';
 import { SKILL_NAMES, canonicalSkill } from '../../lib/skills';
+import { SAMPLE_JDS } from '../../data/sampleJobDescriptions';
 import { rankCandidates, TIER_COLOR, matchTier } from '../../lib/matching';
 
 const SKILL_OPTIONS = SKILL_NAMES;
@@ -57,15 +58,24 @@ export default function PostJob({ onNavigate }) {
     return e;
   }
 
-  async function runExtraction() {
+  async function runExtraction(text = form.description) {
     setSubmitError('');
     try {
-      const found = await extractSkills(form.description);
+      const found = await extractSkills(text);
       setExtracted(found);
       setForm(f => ({ ...f, skills: [...new Set([...f.skills, ...found.filter(x => x.required).map(x => x.skill)])] }));
     } catch (err) {
       setSubmitError(err.message);
     }
+  }
+
+  // Load a sample job description into the form and extract its skills right away
+  function loadSample(index) {
+    const sample = SAMPLE_JDS[index];
+    if (!sample) return;
+    setErrors({});
+    setForm(f => ({ ...f, ...sample.form, description: sample.description, skills: [] }));
+    runExtraction(sample.description);
   }
 
   async function handleSubmit(e) {
@@ -207,9 +217,14 @@ export default function PostJob({ onNavigate }) {
             <textarea className="form-textarea" rows={4} placeholder="Describe the role, responsibilities, team, and what the candidate will learn or build..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={{ minHeight: 110 }} />
             {errors.description && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.description}</span>}
             <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-primary btn-sm" onClick={runExtraction} disabled={!form.description.trim()}>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => runExtraction()} disabled={!form.description.trim()}>
                 <Wand2 size={13} /> Extract skills from description
               </button>
+              <select className="form-select" style={{ width: 'auto', padding: '4px 10px', fontSize: 12 }} value=""
+                onChange={e => loadSample(Number(e.target.value))} aria-label="Use a sample job description">
+                <option value="" disabled>Use a sample job description…</option>
+                {SAMPLE_JDS.map((j, i) => <option key={j.label} value={i}>{j.label}</option>)}
+              </select>
 
             </div>
             {extracted.length > 0 && (

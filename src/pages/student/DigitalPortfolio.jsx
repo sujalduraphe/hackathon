@@ -100,7 +100,20 @@ function ResumeCard({ profile }) {
   async function onFile(e) {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (file) await handle(file);
+  }
+
+  // Upload the bundled sample resume, to see extraction without your own file
+  async function trySample() {
+    setError('');
+    try {
+      const res = await fetch('/sample-resume.pdf');
+      if (!res.ok) throw new Error('Sample resume not found');
+      await handle(new File([await res.blob()], 'sample-resume.pdf', { type: 'application/pdf' }));
+    } catch (err) { setError(err.message); }
+  }
+
+  async function handle(file) {
     setError(''); setAdded(''); setBusy(true);
     try {
       if (file.type !== 'application/pdf') throw new Error('Please choose a PDF file.');
@@ -150,6 +163,11 @@ function ResumeCard({ profile }) {
       </div>
 
       {!profile.resume && <div style={{ fontSize: 13, color: '#9ca3af' }}>Upload your resume (PDF, max 2 MB). Skills found in it can be added to your profile, and recruiters can view it.</div>}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '10px 0' }}>
+        <a className="btn btn-ghost btn-sm" href="/sample-resume.pdf" download="SkillBridge-resume-template.pdf" style={{ textDecoration: 'none' }}>Download template (PDF)</a>
+        <a className="btn btn-ghost btn-sm" href="/sample-resume.html" download="SkillBridge-resume-template.html" style={{ textDecoration: 'none' }}>Editable template (HTML)</a>
+        <button className="btn btn-ghost btn-sm" onClick={trySample} disabled={busy}>Try with sample resume</button>
+      </div>
       {profile.resume && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <FileText size={18} color="#111111" />
