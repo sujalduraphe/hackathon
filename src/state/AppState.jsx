@@ -8,6 +8,23 @@ import { DEMO_ACCOUNTS, DEMO_PASSWORD } from '../lib/demo';
 
 const AppStateContext = createContext(null);
 
+/**
+ * Returning from LinkedIn sign-in, the result is in the URL fragment
+ * (#oauth_token=… / #oauth_pending=… / #oauth_error=…). Read it once, store a
+ * login token if there is one, and clear the fragment from the address bar.
+ */
+function readOAuthReturn() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  if (!['oauth_token', 'oauth_pending', 'oauth_error'].some(k => params.has(k))) return null;
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  if (params.get('oauth_token')) tokenStore.set(params.get('oauth_token'));
+  return {
+    pending: params.get('oauth_pending'),
+    profile: { name: params.get('name') || '', email: params.get('email') || '' },
+    error: params.get('oauth_error'),
+  };
+}
+
 const EMPTY = { profile: null, jobs: [], candidates: [], applications: [], assessments: [], analytics: null, programs: [], registrations: [], market: null };
 
 async function loadRoleData(role) {
@@ -38,7 +55,9 @@ async function loadRoleData(role) {
 
 export function AppStateProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [status, setStatus] = useState(tokenStore.get() ? 'loading' : 'anonymous'); // loading | anonymous | ready
+  // must run before the status below, since it may store a login token
+  const [oauthResult] = useState(readOAuthReturn);
+  const [status, setStatus] = useState(() => (tokenStore.get() ? 'loading' : 'anonymous')); // loading | anonymous | ready
   const [data, setData] = useState(EMPTY);
 
   const logout = useCallback(() => {
@@ -65,6 +84,18 @@ export function AppStateProvider({ children }) {
   const actions = useMemo(() => ({
     async login(email, password) {
       const { token, user: u } = await api('/auth/login', { method: 'POST', body: { email, password } });
+      tokenStore.set(token);
+      await startSession(u);
+    },
+    // Google: `credential` is the ID token from Google's sign-in button.
+    // Returns { status: 'signed-in' } or { status: 'needs-signup', pending, profile }.
+    async googleSignIn(credential) {
+      const r = await api('/auth/google', { method: 'POST', body: { credential } });
+      if (r.status === 'signed-in') { tokenStore.set(r.token); await startSession(r.user); }
+      return r;
+    },
+    async completeSocialSignup(pending, form) {
+      const { token, user: u } = await api('/auth/social/complete', { method: 'POST', body: { ...form, pending } });
       tokenStore.set(token);
       await startSession(u);
     },
@@ -199,7 +230,7 @@ export function AppStateProvider({ children }) {
     }
   }, []);
 
-  const value = useMemo(() => ({ user, status, ...data, ...actions, openResume }), [user, status, data, actions, openResume]);
+  const value = useMemo(() => ({ user, status, oauthResult, ...data, ...actions, openResume }), [user, status, oauthResult, data, actions, openResume]);
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 

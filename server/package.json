@@ -1,7 +1,7 @@
 {
   "name": "skillbridge-api",
   "version": "1.0.0",
-  "description": "API for the Academia\u2013Industry Collaboration Portal",
+  "description": "API for the Academia–Industry Collaboration Portal",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-validator": "^7.2.0",
+    "google-auth-library": "^11.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.24.4",
     "multer": "^1.4.5-lts.1",

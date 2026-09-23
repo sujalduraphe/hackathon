@@ -13,6 +13,8 @@ export function authenticate(req, res, next) {
   const token = header.split(' ')[1];
   try {
     const decoded = verifyToken(token);
+    // OAuth state / pending-signup tokens are not sessions
+    if (decoded.purpose) throw new Error('Not a session token');
     req.user = decoded;
     next();
   } catch {
@@ -45,7 +47,8 @@ export function optionalAuth(req, _res, next) {
   const header = req.headers.authorization;
   if (header && header.startsWith('Bearer ')) {
     try {
-      req.user = verifyToken(header.split(' ')[1]);
+      const decoded = verifyToken(header.split(' ')[1]);
+      if (!decoded.purpose) req.user = decoded;
     } catch {}
   }
   next();

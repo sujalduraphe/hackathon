@@ -1,7 +1,7 @@
 // Thin fetch wrapper for the backend API. Attaches the JWT and turns error
 // responses into thrown Errors with the server's message.
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5050/api';
+export const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5050/api';
 const TOKEN_KEY = 'aicp-token';
 
 export const tokenStore = {

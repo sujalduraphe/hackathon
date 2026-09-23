@@ -24,6 +24,11 @@ const upload = multer({
 r.post('/auth/register', ah(auth.register));
 r.post('/auth/login', ah(auth.login));
 r.get('/auth/me', authenticate, ah(auth.me));
+r.get('/auth/providers', auth.providers);
+r.post('/auth/google', ah(auth.google));
+r.post('/auth/social/complete', ah(auth.completeSocialSignup));
+r.get('/auth/linkedin/start', ah(auth.linkedinStart));
+r.get('/auth/linkedin/callback', ah(auth.linkedinCallback));
 
 // Students / talent pool
 r.get('/students/me', authenticate, authorize('student'), ah(students.myProfile));

@@ -8,6 +8,8 @@ export function toClient(schema) {
       ret.id = String(ret._id);
       delete ret._id;
       delete ret.passwordHash;
+      delete ret.googleId;
+      delete ret.linkedinId;
       return ret;
     },
   });

@@ -22,3 +22,18 @@ export function generateToken(payload) {
 export function verifyToken(token) {
   return jwt.verify(token, SECRET);
 }
+
+/**
+ * Short-lived single-purpose tokens (OAuth state, pending social signup).
+ * They carry a `purpose` claim, which session authentication rejects, so they
+ * can never be used as a login session.
+ */
+export function signPurpose(payload, purpose, expiresIn = '10m') {
+  return jwt.sign({ ...payload, purpose }, SECRET, { expiresIn });
+}
+
+export function verifyPurpose(token, purpose) {
+  const decoded = jwt.verify(token, SECRET);
+  if (decoded.purpose !== purpose) throw new Error('Wrong token type');
+  return decoded;
+}

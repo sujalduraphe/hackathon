@@ -55,6 +55,15 @@ Password for all: `demo1234`
 
 The top bar has **Student / Industry / Academician / Institution** tabs that log in as the demo account for that role, handy for demos. It's a real login, so the server's permission checks still apply. Set `VITE_DEMO_SWITCH=false` when building to hide it.
 
+## Sign in with Google / LinkedIn (optional)
+
+The login page shows **Continue with Google** and **Continue with LinkedIn** once their keys are set in `server/.env` (see `server/.env.example`); until then the buttons stay hidden. First-time social users choose their role before the account is created. Existing accounts are linked by verified email. The app never sees Google or LinkedIn passwords.
+
+- Google: create an OAuth client ID (Web) in Google Cloud Console, add `http://localhost:5173` as an authorised JavaScript origin, set `GOOGLE_CLIENT_ID`.
+- LinkedIn: create an app at linkedin.com/developers, add the product "Sign In with LinkedIn using OpenID Connect", add the redirect URL `http://localhost:5050/api/auth/linkedin/callback`, set `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
+
+Glassdoor offers no sign-in for other sites, so the login page only links out to Glassdoor job listings.
+
 ## Deploy
 
 - **Database:** MongoDB Atlas (free M0 cluster). Allow network access from anywhere (`0.0.0.0/0`), since Render's free tier has no fixed IP.

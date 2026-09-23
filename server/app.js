@@ -29,9 +29,10 @@ app.use((err, _req, res, _next) => {
   if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File is too large' });
   if (err.name === 'ValidationError') return res.status(422).json({ error: err.message });
   if (err.code === 11000) return res.status(409).json({ error: 'Duplicate record' });
-  const status = err.status || 500;
-  if (status >= 500) console.error('[ERROR]', err);
-  res.status(status).json({ error: status >= 500 ? 'Internal Server Error' : err.message });
+  // errors we raise on purpose (HttpError) carry a status and a safe message;
+  // anything else is unexpected, so log it and hide the details
+  if (!err.status) console.error('[ERROR]', err);
+  res.status(err.status || 500).json({ error: err.status ? err.message : 'Internal Server Error' });
 });
 
 export default app;
