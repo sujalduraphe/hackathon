@@ -15,17 +15,13 @@ import DigitalPortfolio from './pages/student/DigitalPortfolio';
 
 // Faculty Pages
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
-import FacultyPrograms from './pages/faculty/FacultyPrograms';
-import ConsultancyHub from './pages/faculty/ConsultancyHub';
-import GuestLectures from './pages/faculty/GuestLectures';
-import ResearchCollaboration from './pages/faculty/ResearchCollaboration';
 
 // Industry Pages
 import IndustryDashboard from './pages/industry/IndustryDashboard';
 import TalentDiscovery from './pages/industry/TalentDiscovery';
 import PostJob from './pages/industry/PostJob';
-import TrainingPrograms from './pages/industry/TrainingPrograms';
-import IndustryChallenges from './pages/industry/IndustryChallenges';
+import ManagePrograms from './pages/industry/ManagePrograms';
+import ProgramsBrowse from './pages/shared/ProgramsBrowse';
 
 // Institution Pages
 import InstitutionDashboard from './pages/institution/InstitutionDashboard';
@@ -104,6 +100,7 @@ function PageContent({ role, page, onNavigate }) {
     if (page === 'skill-gap') return <SkillGapAnalysis onNavigate={onNavigate} />;
     if (page === 'internships') return <InternshipsJobs onNavigate={onNavigate} />;
     if (page === 'learning') return <LearningPathways onNavigate={onNavigate} />;
+    if (page === 'programs') return <ProgramsBrowse title="📚 Programs & Mentorship" subtitle="Industry training, workshops, mentorship, innovation challenges and live projects you can register for." />;
     if (page === 'portfolio') return <DigitalPortfolio />;
     if (page === 'applications') return <StudentApplications onNavigate={onNavigate} />;
     return <StudentDashboard onNavigate={onNavigate} />;
@@ -112,11 +109,12 @@ function PageContent({ role, page, onNavigate }) {
   // Faculty pages
   if (role === 'faculty') {
     if (page === 'dashboard') return <FacultyDashboard onNavigate={onNavigate} />;
-    if (page === 'fdp') return <FacultyPrograms />;
-    if (page === 'industrial') return <FacultyPrograms />;
-    if (page === 'consultancy') return <ConsultancyHub />;
-    if (page === 'guest-lectures') return <GuestLectures />;
-    if (page === 'research') return <ResearchCollaboration />;
+    if (page === 'fdp') return <ProgramsBrowse key="fdp" kinds={['fdp']} title="🎓 Faculty Development Programs" subtitle="FDPs offered by industry partners." />;
+    if (page === 'industrial') return <ProgramsBrowse key="ind" kinds={['industrial-training', 'faculty-internship']} title="🏭 Industrial Training & Faculty Internships" subtitle="Hands-on industry exposure to align teaching with current practice." />;
+    if (page === 'consultancy') return <ProgramsBrowse key="con" kinds={['consultancy']} title="🤝 Consultancy" subtitle="Industry problems looking for academic expertise." />;
+    if (page === 'research') return <ProgramsBrowse key="res" kinds={['research']} title="🔬 Collaborative Research" subtitle="Joint research projects with industry." />;
+    if (page === 'guest-lectures') return <ProgramsBrowse key="gl" kinds={['guest-lecture']} title="🎤 Guest Lectures" subtitle="Industry experts available to lecture at your institution. Register to request a session." />;
+    if (page === 'workshops') return <ProgramsBrowse key="ws" kinds={['workshop', 'live-project']} title="🛠️ Workshops & Live Projects" subtitle="Workshops and live industry projects open to academicians." />;
     return <FacultyDashboard onNavigate={onNavigate} />;
   }
 
@@ -125,8 +123,7 @@ function PageContent({ role, page, onNavigate }) {
     if (page === 'dashboard') return <IndustryDashboard onNavigate={onNavigate} />;
     if (page === 'talent') return <TalentDiscovery />;
     if (page === 'post-job') return <PostJob onNavigate={onNavigate} />;
-    if (page === 'programs') return <TrainingPrograms />;
-    if (page === 'challenges') return <IndustryChallenges />;
+    if (page === 'programs') return <ManagePrograms />;
     return <IndustryDashboard onNavigate={onNavigate} />;
   }
 

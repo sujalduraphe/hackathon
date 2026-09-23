@@ -16,6 +16,7 @@ import Registration from './models/Registration.js';
 import { CURRENT_USER, JOBS, CANDIDATES } from '../src/data/store.js';
 import { canonicalProfile, canonicalSkill } from '../src/lib/skills.js';
 import { explainMatch } from '../src/lib/matching.js';
+import { seedExtra } from './seed-extra.js';
 
 export const DEMO_PASSWORD = 'demo1234';
 
@@ -58,11 +59,8 @@ const PROGRAMS = [
   ['guest-lecture', 'Google', 'Building Scalable Systems at Google', '2 Hours', 'Hybrid', '2026-10-22', 10, 'No fee', ['System Design'], 'A Google engineer can deliver this session at your institution. Register to request a date.'],
 ];
 
-async function seed() {
-  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
-    throw new Error('Refusing to wipe a production database. Re-run with --force if you really mean it.');
-  }
-  await connectDB();
+/** Wipes the connected database and loads the demo data. Caller manages the connection. */
+export async function runSeed() {
   await Promise.all([User, Student, Job, Application, Assessment, Program, Registration].map(m => m.deleteMany({})));
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
 
@@ -140,14 +138,26 @@ async function seed() {
   const t = CURRENT_USER.institution;
   await User.create({ name: t.name, email: t.email, role: 'institution', organization: t.college, designation: t.role, avatar: t.avatar, passwordHash });
 
-  console.log(`Seeded ${await Student.countDocuments()} students, ${jobs.length} jobs, ${SEED_APPLICATIONS.length} applications, ${programs.length} programs.`);
+  await seedExtra({ recruiters, jobs, programs, passwordHash });
+
+  console.log(`Seeded ${await Student.countDocuments()} students, ${await Job.countDocuments()} jobs, ${await Application.countDocuments()} applications, `
+    + `${await Assessment.countDocuments()} assessments, ${programs.length} programs, ${await Registration.countDocuments()} registrations, ${await User.countDocuments()} logins.`);
   console.log(`Demo logins (password: ${DEMO_PASSWORD}):`);
   console.log(`  student      ${me.email}`);
   console.log(`  industry     rahul.mehta@microsoft.demo`);
   console.log(`  faculty      ${f.email}`);
-  console.log(`  institution  ${t.email}`);
+  console.log(`  institution  ${t.email}   (second college: placement.vit@edu.in)`);
 }
 
-seed()
-  .catch(err => { console.error(err.message); process.exitCode = 1; })
-  .finally(() => mongoose.disconnect());
+// CLI: `npm run seed`
+if (import.meta.url === `file://${process.argv[1]}`) {
+  (async () => {
+    if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+      throw new Error('Refusing to wipe a production database. Re-run with --force if you really mean it.');
+    }
+    await connectDB();
+    await runSeed();
+  })()
+    .catch(err => { console.error(err.message); process.exitCode = 1; })
+    .finally(() => mongoose.disconnect());
+}

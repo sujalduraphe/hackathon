@@ -1,7 +1,7 @@
 {
-  "name": "skillbridge-backend",
+  "name": "skillbridge-api",
   "version": "1.0.0",
-  "description": "SkillBridge Academia-Industry Collaboration Portal Backend",
+  "description": "API for the Academia\u2013Industry Collaboration Portal",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -23,5 +23,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

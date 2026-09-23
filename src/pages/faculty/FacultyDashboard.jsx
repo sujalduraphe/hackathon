@@ -1,19 +1,30 @@
 import { Calendar, Users, ArrowRight } from 'lucide-react';
-import { FACULTY_PROGRAMS } from '../../data/store';
 import { useAppState } from '../../state/AppState';
+import { PROGRAM_KINDS } from '../../lib/programs';
+
+// which faculty page lists each program kind
+const PAGE_FOR = {
+  fdp: 'fdp', 'industrial-training': 'industrial', 'faculty-internship': 'industrial', consultancy: 'consultancy',
+  research: 'research', 'guest-lecture': 'guest-lectures', workshop: 'workshops', 'live-project': 'workshops',
+};
 
 export default function FacultyDashboard({ onNavigate }) {
-  const { user } = useAppState();
-  const countType = t => FACULTY_PROGRAMS.filter(p => p.type === t).length;
+  const { user, programs, registrations } = useAppState();
+  const count = (...kinds) => programs.filter(p => kinds.includes(p.kind)).length;
+  const registered = new Set(registrations.map(r => r.programId));
 
   const stats = [
-    { label: 'FDPs Available', value: countType('FDP'), icon: '📚', color: '#f59e0b' },
-    { label: 'Industrial Internships', value: countType('Industrial Internship'), icon: '🏭', color: '#10b981' },
-    { label: 'Consultancy Openings', value: countType('Consultancy'), icon: '🔬', color: '#6366f1' },
-    { label: 'Guest Lectures', value: countType('Guest Lecture'), icon: '🎤', color: '#f43f5e' },
+    { label: 'FDPs', value: count('fdp'), icon: '🎓', color: '#f59e0b' },
+    { label: 'Industrial training & internships', value: count('industrial-training', 'faculty-internship'), icon: '🏭', color: '#10b981' },
+    { label: 'Consultancy & research', value: count('consultancy', 'research'), icon: '🔬', color: '#6366f1' },
+    { label: 'My registrations', value: registrations.length, icon: '📝', color: '#f43f5e' },
   ];
 
-  const upcoming = FACULTY_PROGRAMS.slice(0, 3);
+  const upcoming = [...programs]
+    .filter(p => !registered.has(p.id))
+    .sort((a, b) => (a.startDate || '9999').localeCompare(b.startDate || '9999'))
+    .slice(0, 3);
+  const pending = registrations.filter(r => r.status === 'pending').length;
 
   return (
     <div className="animate-fade-in">
@@ -40,8 +51,10 @@ export default function FacultyDashboard({ onNavigate }) {
           padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
         }}>
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>🔔 2 New FDPs match your specialization in AI/ML</div>
-            <div style={{ fontSize: 13, color: '#9ca3af' }}>Google Advanced AI FDP closes in 8 days · 18 seats remaining</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>🔔 {programs.length} industry opportunities open to academicians</div>
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>
+              {registrations.length ? `${registrations.length} registration${registrations.length === 1 ? '' : 's'}, ${pending} awaiting confirmation` : 'You have not registered for any yet.'}
+            </div>
           </div>
           <button className="btn btn-amber btn-sm" onClick={() => onNavigate('fdp')}>
             View FDPs <ArrowRight size={12} />
@@ -66,40 +79,35 @@ export default function FacultyDashboard({ onNavigate }) {
       <div style={{ marginBottom: 28 }}>
         <div className="section-header">
           <div>
-            <div className="section-title">🗓️ Upcoming Programs</div>
-            <div className="section-subtitle">FDPs, industrial training and collaborations</div>
+            <div className="section-title">🗓️ Upcoming opportunities</div>
+            <div className="section-subtitle">Earliest start dates you haven't registered for</div>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('fdp')}>View All →</button>
         </div>
         <div className="grid-auto">
-          {upcoming.map(prog => (
-            <div key={prog.id} className="job-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate('fdp')}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 44, height: 44, background: `${prog.color}22`, borderRadius: 10,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0
-                }}>
-                  {prog.icon}
+          {upcoming.length === 0 && <div style={{ fontSize: 13, color: '#9ca3af' }}>Nothing new right now.</div>}
+          {upcoming.map(p => {
+            const k = PROGRAM_KINDS[p.kind];
+            return (
+              <div key={p.id} className="job-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate(PAGE_FOR[p.kind])}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 26 }}>{k.icon}</div>
+                  <div>
+                    <span className="badge badge-amber" style={{ marginBottom: 4 }}>{k.label}</span>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{p.title}</div>
+                    <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{p.organization}</div>
+                  </div>
                 </div>
-                <div>
-                  <span className="badge badge-amber" style={{ marginBottom: 4 }}>{prog.type}</span>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{prog.title}</div>
-                  <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{prog.organizer}</div>
+                <div className="job-card-meta">
+                  {p.startDate && <span className="job-meta-item"><Calendar size={11} />{p.startDate}</span>}
+                  {p.seats && <span className="job-meta-item"><Users size={11} />{Math.max(0, p.seats - p.accepted)} seats left</span>}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+                  <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 600 }}>{p.compensation}</span>
+                  <span style={{ fontSize: 13, color: '#4f46e5', fontWeight: 600 }}>View & register <ArrowRight size={12} /></span>
                 </div>
               </div>
-              <div className="job-card-meta">
-                <span className="job-meta-item"><Calendar size={11} />{prog.date}</span>
-                <span className="job-meta-item"><Users size={11} />{prog.seats - prog.registered} seats left</span>
-              </div>
-              <div className="skill-tags" style={{ marginTop: 10 }}>
-                {prog.skills.slice(0, 3).map(s => <span key={s} className="tag">{s}</span>)}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
-                <span style={{ fontSize: 13, color: '#f59e0b', fontWeight: 600 }}>{prog.stipend}</span>
-                <button className="btn btn-amber btn-sm">Register →</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

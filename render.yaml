@@ -1,0 +1,20 @@
+# Render Blueprint for the API. Frontend is deployed separately on Vercel.
+services:
+  - type: web
+    name: skillbridge-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --prefix server
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI        # MongoDB Atlas connection string, entered in the Render dashboard
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true     # Render generates a random secret
+      - key: FRONTEND_URL       # the Vercel URL, e.g. https://your-app.vercel.app
+        sync: false
+      - key: SEED_DEMO          # load demo data into an empty database on first start
+        value: "true"

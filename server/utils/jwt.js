@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 
-const SECRET = process.env.JWT_SECRET || 'skillbridge_secret';
+const SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'dev-only-secret');
+if (!SECRET) throw new Error('JWT_SECRET must be set in production');
 const EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 /**

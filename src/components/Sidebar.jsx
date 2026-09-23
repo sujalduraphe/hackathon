@@ -15,6 +15,7 @@ const SIDEBAR_CONFIG = {
     { label: 'Opportunities', items: [
       { id: 'internships', icon: Briefcase, label: 'Internships & Jobs' },
       { id: 'learning', icon: BookOpen, label: 'Learning Pathways' },
+      { id: 'programs', icon: UserCheck, label: 'Programs & Mentorship' },
     ]},
     { label: 'Profile', items: [
       { id: 'portfolio', icon: Award, label: 'Digital Portfolio' },
@@ -28,9 +29,10 @@ const SIDEBAR_CONFIG = {
       { id: 'industrial', icon: Building2, label: 'Industrial Training' },
     ]},
     { label: 'Collaboration', items: [
-      { id: 'consultancy', icon: FlaskConical, label: 'Consultancy & R&D' },
+      { id: 'consultancy', icon: FlaskConical, label: 'Consultancy' },
+      { id: 'research', icon: Beaker, label: 'Collaborative Research' },
       { id: 'guest-lectures', icon: Megaphone, label: 'Guest Lectures' },
-      { id: 'research', icon: Beaker, label: 'Research Projects' },
+      { id: 'workshops', icon: Star, label: 'Workshops & Live Projects' },
     ]}
   ],
   industry: [
@@ -39,9 +41,8 @@ const SIDEBAR_CONFIG = {
       { id: 'post-job', icon: Briefcase, label: 'Post Opportunities' },
       { id: 'talent', icon: Users, label: 'Talent Discovery' },
     ]},
-    { label: 'Programs', items: [
-      { id: 'programs', icon: BookOpen, label: 'Training Programs' },
-      { id: 'challenges', icon: Star, label: 'Innovation Challenges' },
+    { label: 'Collaboration', items: [
+      { id: 'programs', icon: BookOpen, label: 'Programs & Collaboration' },
     ]}
   ],
   institution: [

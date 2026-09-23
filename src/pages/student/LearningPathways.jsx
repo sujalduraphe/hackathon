@@ -51,11 +51,12 @@ const PRIORITY = {
 };
 
 export default function LearningPathways({ onNavigate }) {
-  const { profile, jobs } = useAppState();
+  const { profile, jobs, programs } = useAppState();
+  const programsFor = skill => programs.filter(p => (p.skills || []).includes(skill));
   const target = closestRole(profile.skills, jobs);
   const gaps = target.gaps.filter(g => g.gap > 0);
   const [expanded, setExpanded] = useState(gaps[0]?.name ?? null);
-  const withPath = gaps.filter(g => LIBRARY[g.name]);
+  const withPath = gaps.filter(g => LIBRARY[g.name] || programsFor(g.name).length);
 
   return (
     <div className="animate-fade-in">
@@ -70,7 +71,7 @@ export default function LearningPathways({ onNavigate }) {
         {[
           { label: 'Skill gaps', value: gaps.length, color: '#f43f5e' },
           { label: 'Critical', value: gaps.filter(g => g.priority === 'critical').length, color: '#f59e0b' },
-          { label: 'With a learning path', value: withPath.length, color: '#6366f1' },
+          { label: 'With a path or program', value: withPath.length, color: '#6366f1' },
           { label: 'Free resources', value: withPath.reduce((n, g) => n + LIBRARY[g.name].filter(st => st.type === 'free').length, 0), color: '#10b981' },
         ].map(s => (
           <div key={s.label} className="stat-card">
@@ -90,13 +91,14 @@ export default function LearningPathways({ onNavigate }) {
 
       {gaps.map(g => {
         const path = LIBRARY[g.name];
+        const offered = programsFor(g.name);
         const isOpen = expanded === g.name;
         const pr = PRIORITY[g.priority] || PRIORITY.recommended;
         return (
           <div key={g.name} className="card" style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', cursor: path ? 'pointer' : 'default' }}
-              onClick={() => path && setExpanded(isOpen ? null : g.name)}
+              onClick={() => (path || offered.length) && setExpanded(isOpen ? null : g.name)}
             >
               <div style={{ fontSize: 22 }}>{pr.icon}</div>
               <div style={{ flex: 1 }}>
@@ -108,14 +110,27 @@ export default function LearningPathways({ onNavigate }) {
                   You: {g.current}% · Needed: {g.target}% · Asked in {g.postings ? `${g.demand}% of ${target.role} postings` : 'the baseline for this role'}
                 </div>
               </div>
-              {path
+              {path || offered.length
                 ? <ChevronRight size={16} style={{ color: '#9ca3af', transform: isOpen ? 'rotate(90deg)' : 'none', transition: '0.2s' }} />
-                : <span style={{ fontSize: 12, color: '#9ca3af' }}>No curated path yet</span>}
+                : <span style={{ fontSize: 12, color: '#9ca3af' }}>No resources yet</span>}
             </div>
 
-            {isOpen && path && (
+            {isOpen && (path || offered.length > 0) && (
               <div style={{ padding: '0 24px 24px', borderTop: '1px solid #f3f4f6' }}>
-                <div className="timeline" style={{ marginTop: 20 }}>
+                {offered.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Industry programs covering {g.name}</div>
+                    {offered.map(p => (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+                        <span style={{ flex: 1, fontSize: 13 }}>
+                          <strong>{p.title}</strong> · {p.organization}{p.startDate ? ` · starts ${p.startDate}` : ''}{p.compensation ? ` · ${p.compensation}` : ''}
+                        </span>
+                        <button className="btn btn-primary btn-sm" onClick={() => onNavigate('programs')}>View</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {path && <div className="timeline" style={{ marginTop: 20 }}>
                   {path.map((step, si) => (
                     <div key={si} className="timeline-item">
                       <div className="timeline-dot" />
@@ -129,7 +144,7 @@ export default function LearningPathways({ onNavigate }) {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
                 <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 12 }}>
                   When you're ready, retake the matching assessment to update your verified level.
                 </div>
