@@ -1089,7 +1089,10 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.animate-fade-in { animation: fade-in 0.35s ease forwards; }
+/* 'backwards', not 'forwards': a retained transform would make every page
+   wrapper a containing block and pin position:fixed modals to the page instead
+   of the viewport */
+.animate-fade-in { animation: fade-in 0.35s ease backwards; }
 .animate-slide-right { animation: slide-in-right 0.35s ease forwards; }
 
 .stagger-1 { animation-delay: 0.04s; opacity: 0; }
@@ -1150,3 +1153,39 @@ body {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .pipeline-grid { grid-template-columns: repeat(2,1fr); }
 }
+
+/* ============================================
+   AUTH (login / sign up)
+   ============================================ */
+.auth-page {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 16px;
+}
+.auth-card { width: 100%; max-width: 480px; padding: 32px; }
+.auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.auth-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--gray-900); }
+.auth-subtitle { font-size: 13px; color: var(--gray-500); }
+.auth-tabs {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 20px;
+  background: var(--gray-100); border-radius: var(--radius-md);
+}
+.auth-tabs button {
+  flex: 1; padding: 8px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--gray-500); font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.auth-tabs button.active { background: #fff; color: var(--gray-900); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.auth-roles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.auth-roles button {
+  padding: 9px; border: 1px solid var(--border-color); border-radius: var(--radius-md);
+  background: #fff; color: var(--gray-600); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.auth-roles button.active { border-color: var(--primary-500); background: var(--primary-50); color: var(--primary-700); }
+.auth-error {
+  margin: 4px 0 8px; padding: 10px 12px; border-radius: var(--radius-md);
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 13px;
+}
+.auth-switch { margin-top: 18px; text-align: center; font-size: 13px; color: var(--gray-500); }
+.auth-switch button { border: 0; background: none; color: var(--primary-600); font-weight: 600; cursor: pointer; padding: 0; }
+.auth-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--gray-500); }

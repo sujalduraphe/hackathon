@@ -1,53 +1,30 @@
 import { useState } from 'react';
 import { AlertTriangle, ChevronRight, BookOpen, Target } from 'lucide-react';
-import { CURRENT_USER, LEARNING_PATHS } from '../../data/store';
+import { useAppState } from '../../state/AppState';
+import { ROLE_FAMILIES, roleGap } from '../../lib/matching';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 
-const INDUSTRY_BENCHMARKS = {
-  'Python': 85, 'Machine Learning': 91, 'React': 82, 'SQL': 87,
-  'Node.js': 80, 'Data Structures': 92, 'System Design': 88,
-  'Cloud (AWS)': 90, 'Communication': 85, 'Leadership': 75
-};
+const short = n => (n.length > 12 ? n.slice(0, 10) + '..' : n);
 
 export default function SkillGapAnalysis({ onNavigate }) {
-  const user = CURRENT_USER.student;
-  const [targetRole, setTargetRole] = useState('ML Engineer');
+  const { profile, jobs } = useAppState();
+  const [targetRole, setTargetRole] = useState(ROLE_FAMILIES[0].role);
+  const roles = ROLE_FAMILIES.map(f => f.role);
 
-  const roles = ['ML Engineer', 'Full Stack Developer', 'Data Analyst', 'Cloud Engineer', 'SWE - Backend'];
+  // Benchmarks come from live postings for the chosen role, not a fixed table
+  const { postings, gaps: skillGaps, readiness: overallReadiness } = roleGap(profile.skills, targetRole, jobs);
 
-  const radarData = Object.entries(user.skills).map(([name, val]) => ({
-    skill: name.length > 12 ? name.slice(0, 10) + '..' : name,
-    student: val,
-    industry: INDUSTRY_BENCHMARKS[name] || 80
-  }));
-
-  const gapData = Object.entries(user.skills).map(([name, val]) => {
-    const bench = INDUSTRY_BENCHMARKS[name] || 80;
-    return { skill: name.length > 10 ? name.slice(0, 10) + '..' : name, gap: Math.max(0, bench - val), current: val };
-  }).sort((a, b) => b.gap - a.gap);
-
-  const skillGaps = Object.entries(user.skills).map(([name, val]) => {
-    const bench = INDUSTRY_BENCHMARKS[name] || 80;
-    const gap = Math.max(0, bench - val);
-    const priority = gap > 35 ? 'critical' : gap > 15 ? 'recommended' : 'good';
-    return { name, current: val, target: bench, gap, priority };
-  }).sort((a, b) => b.gap - a.gap);
-
-  const overallReadiness = Math.round(
-    Object.entries(user.skills).reduce((sum, [name, val]) => {
-      const bench = INDUSTRY_BENCHMARKS[name] || 80;
-      return sum + Math.min(val / bench, 1);
-    }, 0) / Object.keys(user.skills).length * 100
-  );
+  const radarData = skillGaps.map(g => ({ skill: short(g.name), student: g.current, industry: g.target }));
+  const gapData = skillGaps.map(g => ({ skill: short(g.name), gap: g.gap, current: g.current })).sort((a, b) => b.gap - a.gap);
 
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
         <h1 className="page-hero-title">🎯 Skill Gap Analysis</h1>
-        <p className="page-hero-subtitle">Compare your current skills against industry benchmarks for your target role.</p>
+        <p className="page-hero-subtitle">Compare your current skills against what employers on the portal are asking for in your target role.</p>
       </div>
 
       {/* Target Role Selector */}
@@ -82,6 +59,11 @@ export default function SkillGapAnalysis({ onNavigate }) {
             You are <strong style={{ color: '#a78bfa' }}>{overallReadiness}% ready</strong> for this role.
             Focus on closing {skillGaps.filter(g => g.priority === 'critical').length} critical skill gaps to boost your match score significantly.
           </div>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
+            {postings.length > 0
+              ? <>Requirements derived from {postings.length} live posting{postings.length > 1 ? 's' : ''}: {postings.map(p => `${p.company} – ${p.title}`).join('; ')}</>
+              : <>No live postings for this role yet, so a baseline skill set is shown.</>}
+          </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <span className="badge badge-rose">🔴 {skillGaps.filter(g => g.priority === 'critical').length} Critical</span>
             <span className="badge badge-amber">🟡 {skillGaps.filter(g => g.priority === 'recommended').length} Recommended</span>
@@ -102,13 +84,13 @@ export default function SkillGapAnalysis({ onNavigate }) {
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <RadarChart data={radarData}>
-              <PolarGrid stroke="rgba(255,255,255,0.08)" />
-              <PolarAngleAxis dataKey="skill" tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 10 }} />
-              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 9 }} />
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="skill" tick={{ fill: '#6b7280', fontSize: 10 }} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 9 }} />
               <Radar name="Your Skills" dataKey="student" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} strokeWidth={2} />
               <Radar name="Industry Benchmark" dataKey="industry" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} strokeDasharray="4 2" />
               <Tooltip
-                contentStyle={{ background: '#ffffff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'white' }}
+                contentStyle={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, color: '#111827' }}
               />
               <Legend wrapperStyle={{ color: '#6b7280', fontSize: 12 }} />
             </RadarChart>
@@ -122,11 +104,11 @@ export default function SkillGapAnalysis({ onNavigate }) {
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={gapData.slice(0, 7)} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis type="number" domain={[0, 60]} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} />
-              <YAxis dataKey="skill" type="category" width={80} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis type="number" domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 10 }} />
+              <YAxis dataKey="skill" type="category" width={80} tick={{ fill: '#6b7280', fontSize: 10 }} />
               <Tooltip
-                contentStyle={{ background: '#ffffff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'white' }}
+                contentStyle={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8, color: '#111827' }}
                 formatter={(v) => [`${v}%`, 'Gap']}
               />
               <Bar dataKey="gap" name="Gap to Close" fill="url(#gapGrad)" radius={[0, 4, 4, 0]} />
@@ -152,6 +134,12 @@ export default function SkillGapAnalysis({ onNavigate }) {
               <div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
                 <span style={{ color: '#9ca3af' }}>You: <strong style={{ color: '#6366f1' }}>{g.current}%</strong></span>
                 <span style={{ color: '#9ca3af' }}>Target: <strong style={{ color: '#10b981' }}>{g.target}%</strong></span>
+                <span style={{ color: '#9ca3af' }}>Asked in: <strong>{g.postings ? `${g.demand}% of postings` : 'baseline'}</strong></span>
+                {profile.skillSource?.[g.name] && (
+                  <span className={`badge ${profile.skillSource[g.name] === 'assessment' ? 'badge-emerald' : 'badge-gray'}`} style={{ fontSize: 10 }}>
+                    {profile.skillSource[g.name] === 'assessment' ? 'Verified' : 'Self-declared'}
+                  </span>
+                )}
                 {g.gap > 0 && <span style={{ color: '#9ca3af' }}>Gap: <strong style={{ color: '#f43f5e' }}>{g.gap}%</strong></span>}
               </div>
             </div>

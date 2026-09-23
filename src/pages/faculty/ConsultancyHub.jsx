@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Plus, X, ChevronRight, Lightbulb, FlaskConical, Handshake, BookOpen } from 'lucide-react';
-import { CURRENT_USER } from '../../data/store';
 
 const ACTIVE_PROJECTS = [
   {
@@ -30,7 +29,6 @@ const TYPES = ['R&D Project', 'Consultancy', 'Collaborative Research', 'Tech Tra
 const SKILL_AREAS = ['AI/ML', 'Blockchain', 'IoT', 'Cloud', 'Cybersecurity', 'NLP', 'Robotics', 'Data Science'];
 
 export default function ConsultancyHub() {
-  const user = CURRENT_USER.faculty;
   const [projects, setProjects] = useState(ACTIVE_PROJECTS);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -72,7 +70,6 @@ export default function ConsultancyHub() {
           { label: 'Active Projects', value: projects.filter(p => p.status === 'Active').length, color: '#10b981', icon: '🔬' },
           { label: 'Proposals Under Review', value: projects.filter(p => p.status.includes('Review') || p.status.includes('Submitted')).length, color: '#f59e0b', icon: '📋' },
           { label: 'Total Funding', value: '₹2.7L', color: '#6366f1', icon: '💰' },
-          { label: 'Publications Pipeline', value: user.publications, color: '#f43f5e', icon: '📄' },
         ].map((s, i) => (
           <div key={i} className="stat-card">
             <div style={{ fontSize: 28 }}>{s.icon}</div>

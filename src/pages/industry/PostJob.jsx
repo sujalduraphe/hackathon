@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Plus, X, CheckCircle, Briefcase, MapPin, Clock, DollarSign, Users, Tag } from 'lucide-react';
+import { Plus, X, CheckCircle, Briefcase, Users, Tag, Wand2 } from 'lucide-react';
+import { useAppState } from '../../state/AppState';
+import { SKILL_NAMES, canonicalSkill } from '../../lib/skills';
+import { rankCandidates, TIER_COLOR, matchTier } from '../../lib/matching';
 
-const SKILL_OPTIONS = [
-  'Python', 'Machine Learning', 'React', 'Node.js', 'SQL', 'AWS', 'Docker',
-  'Kubernetes', 'Java', 'TypeScript', 'Go', 'System Design', 'Data Structures',
-  'TensorFlow', 'PyTorch', 'MongoDB', 'Redis', 'Kafka', 'Spring Boot',
-  'Microservices', 'GraphQL', 'Flutter', 'Swift', 'Kotlin', 'C++',
-];
+const SKILL_OPTIONS = SKILL_NAMES;
 
-export default function PostJob() {
-  const [posted, setPosted] = useState(false);
+
+export default function PostJob({ onNavigate }) {
+  const { postJob, candidates, extractSkills } = useAppState();
+  const [submitError, setSubmitError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [posted, setPosted] = useState(null);
+  const [extracted, setExtracted] = useState([]);
   const [form, setForm] = useState({
     title: '', type: 'Internship', location: '', mode: 'Hybrid',
     stipend: '', duration: '', minCGPA: '', openings: '',
@@ -22,7 +25,7 @@ export default function PostJob() {
   const depts = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHE', 'All Departments'];
 
   function addSkill(s) {
-    const sk = s.trim();
+    const sk = canonicalSkill(s.trim());
     if (sk && !form.skills.includes(sk)) {
       setForm(f => ({ ...f, skills: [...f.skills, sk] }));
     }
@@ -54,11 +57,31 @@ export default function PostJob() {
     return e;
   }
 
-  function handleSubmit(e) {
+  async function runExtraction() {
+    setSubmitError('');
+    try {
+      const found = await extractSkills(form.description);
+      setExtracted(found);
+      setForm(f => ({ ...f, skills: [...new Set([...f.skills, ...found.filter(x => x.required).map(x => x.skill)])] }));
+    } catch (err) {
+      setSubmitError(err.message);
+    }
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setPosted(true);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    setBusy(true);
+    setSubmitError('');
+    try {
+      setPosted(await postJob(form));
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (posted) {
@@ -71,8 +94,20 @@ export default function PostJob() {
         <p style={{ color: '#6b7280', fontSize: 15, marginBottom: 32 }}>
           <strong style={{ color: '#10b981' }}>{form.title}</strong> is now live and visible to{' '}
           {form.departments.length > 0 ? form.departments.join(', ') : 'all departments'} students.
-          Matching candidates will be notified automatically.
+          Students now see it ranked by their match score.
         </p>
+        <div className="card" style={{ textAlign: 'left', marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>Top matching students right now</div>
+          {rankCandidates(candidates, posted).slice(0, 4).map(c => (
+            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderTop: '1px solid #f3f4f6' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name} <span style={{ color: '#9ca3af', fontWeight: 400 }}>· {c.college}</span></div>
+                <div style={{ fontSize: 12, color: '#9ca3af' }}>{c.match.reasons[0] || 'No overlapping skills yet'}</div>
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 18, color: TIER_COLOR[matchTier(c.match.score)] }}>{c.match.score}%</div>
+            </div>
+          ))}
+        </div>
         <div className="card" style={{ textAlign: 'left', marginBottom: 28 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {[
@@ -94,10 +129,10 @@ export default function PostJob() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={() => { setPosted(false); setForm({ title:'',type:'Internship',location:'',mode:'Hybrid',stipend:'',duration:'',minCGPA:'',openings:'',deadline:'',description:'',skills:[],minSkillLevel:60,departments:[] }); }}>
+          <button className="btn btn-primary" onClick={() => { setPosted(null); setExtracted([]); setForm({ title:'',type:'Internship',location:'',mode:'Hybrid',stipend:'',duration:'',minCGPA:'',openings:'',deadline:'',description:'',skills:[],minSkillLevel:60,departments:[] }); }}>
             + Post Another
           </button>
-          <button className="btn btn-ghost">View My Postings</button>
+          <button className="btn btn-ghost" onClick={() => onNavigate('talent')}>Review Candidates</button>
         </div>
       </div>
     );
@@ -171,6 +206,30 @@ export default function PostJob() {
             <label className="form-label">Job Description *</label>
             <textarea className="form-textarea" rows={4} placeholder="Describe the role, responsibilities, team, and what the candidate will learn or build..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={{ minHeight: 110 }} />
             {errors.description && <span style={{ fontSize: 11, color: '#f43f5e' }}>{errors.description}</span>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-primary btn-sm" onClick={runExtraction} disabled={!form.description.trim()}>
+                <Wand2 size={13} /> Extract skills from description
+              </button>
+
+            </div>
+            {extracted.length > 0 && (
+              <div style={{ marginTop: 12, background: '#f9fafb', border: '1px solid #e8eaf0', borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>
+                  Found {extracted.length} skills. Required ones were added below; "nice to have" ones can be added manually.
+                </div>
+                {extracted.map(x => (
+                  <div key={x.skill} style={{ fontSize: 12, marginBottom: 6, display: 'flex', gap: 8 }}>
+                    <span className={`badge ${x.required ? 'badge-primary' : 'badge-gray'}`} style={{ whiteSpace: 'nowrap' }}>
+                      {x.skill} · {x.required ? 'required' : 'nice to have'}
+                    </span>
+                    <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>“{x.evidence}”</span>
+                    {!x.required && !form.skills.includes(x.skill) && (
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={() => addSkill(x.skill)}>+ add</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -250,11 +309,11 @@ export default function PostJob() {
           )}
         </div>
 
+        {submitError && <div className="auth-error" role="alert">{submitError}</div>}
         <div style={{ display: 'flex', gap: 12 }}>
-          <button type="submit" className="btn btn-rose btn-lg" style={{ flex: 1 }}>
-            <Briefcase size={16} /> Publish Opportunity
+          <button type="submit" className="btn btn-rose btn-lg" style={{ flex: 1 }} disabled={busy}>
+            <Briefcase size={16} /> {busy ? 'Publishing…' : 'Publish Opportunity'}
           </button>
-          <button type="button" className="btn btn-ghost btn-lg">Save as Draft</button>
         </div>
       </form>
     </div>

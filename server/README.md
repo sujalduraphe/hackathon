@@ -2,160 +2,63 @@
 
 Node.js + Express REST API for the Academia–Industry Collaboration Portal.
 
-## Tech Stack
-
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 20 (ESM) |
-| Framework | Express.js |
-| Database | Supabase (PostgreSQL) |
-| Auth | JWT + bcryptjs |
-| Validation | express-validator |
+| Runtime | Node.js 20+ (ESM) |
+| Framework | Express |
+| Database | MongoDB (Mongoose) |
+| Auth | JWT + bcrypt, role-based access control |
+
+Matching, skill extraction and assessment grading live in `../src/lib` and are
+shared with the frontend, so a score is computed identically in both places.
 
 ## Setup
 
-### 1. Install Dependencies
 ```bash
+# 1. MongoDB (local via Docker, or use a MongoDB Atlas connection string)
+docker run -d --name aicp-mongo -p 27017:27017 -v aicp-mongo-data:/data/db mongo:7
+
+# 2. Install and configure
 cd server
 npm install
-```
+cp .env.example .env        # set MONGODB_URI and a long random JWT_SECRET
 
-### 2. Configure Environment
-```bash
-cp .env.example .env
-# Fill in your Supabase URL, ANON_KEY, and SERVICE_ROLE_KEY
-```
-
-Get your Supabase keys from:  
-**Supabase Dashboard → Project → Settings → API**
-
-### 3. Create Database Tables
-Copy the contents of `schema.sql` and run it in the **Supabase SQL Editor**.
-
-### 4. Seed Demo Data (optional)
-```bash
+# 3. Seed demo data (wipes the database)
 npm run seed
+
+# 4. Start
+npm run dev                  # http://localhost:5050
 ```
 
-### 5. Start Server
-```bash
-npm run dev        # Development (with nodemon)
-npm start          # Production
-```
+Port 5050 is used because macOS reserves 5000 for AirPlay Receiver.
 
-Server runs on `http://localhost:5000`
+## Demo accounts
 
----
+All use password `demo1234`.
 
-## API Reference
+| Role | Email |
+|---|---|
+| Student | arjun.sharma@nitk.edu.in |
+| Industry (Microsoft) | rahul.mehta@microsoft.demo |
+| Academician | priya.nair@nitk.edu.in |
+| Institution (NITK TPO) | placement.nitk@edu.in |
 
-### Auth
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| POST | `/api/auth/register` | Public | Register new user |
-| POST | `/api/auth/login` | Public | Login, get JWT |
-| GET | `/api/auth/me` | Auth | Get own profile |
-| PUT | `/api/auth/me` | Auth | Update profile |
+Other seeded companies have recruiter logins `hr@<company>.demo` (e.g. `hr@google.demo`).
 
-### Jobs
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/jobs` | Public | List jobs (with optional match scoring) |
-| POST | `/api/jobs` | Industry | Post a job |
-| GET | `/api/jobs/:id` | Public | Job details |
-| PUT | `/api/jobs/:id` | Industry | Update job |
-| DELETE | `/api/jobs/:id` | Industry | Close job |
-| GET | `/api/jobs/my` | Industry | My posted jobs |
-| GET | `/api/jobs/:id/candidates` | Industry | Applicants with match scores |
+## Access rules
 
-### Applications
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/applications` | Auth | Role-filtered list |
-| POST | `/api/applications` | Student | Apply to a job |
-| PUT | `/api/applications/:id/status` | Industry | Update status |
-| DELETE | `/api/applications/:id` | Student | Withdraw |
-
-### Assessments
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/assessments/questions` | Public | Get quiz categories |
-| GET | `/api/assessments/questions?category=Core CS` | Public | Get questions |
-| POST | `/api/assessments/submit` | Student | Submit & score |
-| GET | `/api/assessments/my` | Student | My history |
-
-### Skill Gap
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/skill-gap` | Auth | Compute my gap |
-| GET | `/api/skill-gap/recommendations` | Auth | Learning path |
-| GET | `/api/skill-gap/industry-demand` | Public | Market demand data |
-
-### Faculty Programs
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/faculty-programs` | Public | List programs |
-| POST | `/api/faculty-programs` | Industry | Post a program |
-| POST | `/api/faculty-programs/:id/register` | Faculty | Register |
-| DELETE | `/api/faculty-programs/:id/register` | Faculty | Cancel |
-| GET | `/api/faculty-programs/my` | Faculty | My programs |
-| GET | `/api/faculty-programs/dashboard` | Faculty | Dashboard |
-
-### Analytics
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/analytics/institution` | Institution | Placement dashboard |
-| GET | `/api/analytics/industry` | Industry | Recruitment pipeline |
-| GET | `/api/analytics/skill-demand` | Public | Skill demand heatmap |
-
-### Portfolio
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/portfolio/:studentId` | Public | View portfolio |
-| PUT | `/api/portfolio/:studentId` | Student | Update portfolio |
-| POST | `/api/portfolio/:studentId/certifications` | Student | Add certification |
-| POST | `/api/portfolio/:studentId/projects` | Student | Add project |
-
-### Students
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/students` | Industry/Institution | List with filters |
-| GET | `/api/students/me/dashboard` | Student | Dashboard stats |
-| GET | `/api/students/:id` | Auth | Full profile |
-| PUT | `/api/students/:id/skills` | Student | Update skills |
-
-### Mentorships
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/mentorships` | Auth | List mentorships |
-| GET | `/api/mentorships/mentors` | Student | Available mentors |
-| POST | `/api/mentorships` | Student | Request mentorship |
-| PUT | `/api/mentorships/:id/status` | Faculty/Industry | Accept/reject |
-
-### Notifications
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/notifications` | Auth | My notifications |
-| PUT | `/api/notifications/read-all` | Auth | Mark all read |
-| PUT | `/api/notifications/:id/read` | Auth | Mark one read |
-| DELETE | `/api/notifications/:id` | Auth | Delete |
-
----
-
-## Authentication
-
-All protected routes require:
-```
-Authorization: Bearer <jwt_token>
-```
-
----
-
-## Demo Credentials (after seeding)
-
-| Role | Email | Password |
+| Endpoint | Who | Scope |
 |---|---|---|
-| Student | arjun@nitk.edu.in | Password123 |
-| Faculty | priya.nair@nitk.edu.in | Password123 |
-| Industry | rahul@techcorp.io | Password123 |
-| Institution | placement@nitk.edu.in | Password123 |
+| `POST /api/auth/register`, `POST /api/auth/login` | anyone | |
+| `GET /api/auth/me` | any signed-in user | self |
+| `GET /api/students/me`, `POST/DELETE /api/students/me/portfolio/:kind[/:id]` | student | own profile |
+| `GET /api/students` | industry, institution | institution: own college only |
+| `PATCH /api/students/:id/portfolio/:kind/:itemId` | institution | own college's students only |
+| `GET /api/jobs` | any signed-in user | `?mine=1` for a recruiter's own |
+| `POST /api/jobs`, `POST /api/jobs/extract-skills` | industry | posts under own company |
+| `GET /api/jobs/:id/candidates` | industry | own postings only |
+| `GET /api/applications` | student, industry, institution | own / own postings / own college |
+| `POST /api/applications` | student | CGPA eligibility enforced |
+| `PATCH /api/applications/:id` | industry | own postings; one stage at a time, or reject |
+| `GET/POST /api/assessments` | student | graded on the server |
+| `GET /api/analytics/institution` | institution | own college |

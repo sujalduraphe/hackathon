@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, CheckCircle, XCircle, Clock, Trophy, RefreshCw, ArrowRight } from 'lucide-react';
-import { QUIZ_QUESTIONS } from '../../data/store';
+import { ChevronRight, CheckCircle, XCircle, Clock, RefreshCw, ArrowRight } from 'lucide-react';
+import { QUIZ_QUESTIONS, QUIZ_SKILLS } from '../../data/store';
+import { useAppState } from '../../state/AppState';
 
-const CATEGORIES = Object.keys(QUIZ_QUESTIONS);
 
 export default function SkillAssessment({ onNavigate }) {
   const [phase, setPhase] = useState('select'); // select | quiz | result
@@ -12,6 +12,10 @@ export default function SkillAssessment({ onNavigate }) {
   const [revealed, setRevealed] = useState(false);
   const [timer, setTimer] = useState(30);
   const [score, setScore] = useState(0);
+  const { assessments, submitAssessment } = useAppState();
+  const [changes, setChanges] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const questions = selectedCategory ? QUIZ_QUESTIONS[selectedCategory] : [];
 
@@ -47,11 +51,24 @@ export default function SkillAssessment({ onNavigate }) {
       setRevealed(false);
       setTimer(30);
     } else {
-      // Calculate score
-      let correct = 0;
-      questions.forEach((q, i) => { if (answers[i] === q.correct) correct++; });
-      setScore(Math.round((correct / questions.length) * 100));
+      finish();
+    }
+  }
+
+  // Answers are graded on the server; the result updates the stored skill profile.
+  async function finish() {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const answerList = questions.map((_, i) => answers[i] ?? null);
+      const r = await submitAssessment(selectedCategory, answerList);
+      setScore(r.assessment.score);
+      setChanges(r.changes);
       setPhase('result');
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -70,6 +87,7 @@ export default function SkillAssessment({ onNavigate }) {
             { key: 'Core CS', icon: '⚙️', desc: 'Data Structures, Algorithms, OS, DBMS fundamentals', color: '#6366f1', difficulty: 'Medium', time: '~8 min' },
             { key: 'Python & ML', icon: '🐍', desc: 'Python programming, NumPy, Pandas, Machine Learning', color: '#10b981', difficulty: 'Medium', time: '~8 min' },
             { key: 'Web Development', icon: '🌐', desc: 'React, REST APIs, HTTP, JavaScript, CSS', color: '#f59e0b', difficulty: 'Easy-Medium', time: '~8 min' },
+            { key: 'Soft Skills & Aptitude', icon: '🤝', desc: 'Communication, teamwork, leadership scenarios and quantitative aptitude', color: '#06b6d4', difficulty: 'Easy-Medium', time: '~6 min' },
           ].map(cat => (
             <div
               key={cat.key}
@@ -79,11 +97,14 @@ export default function SkillAssessment({ onNavigate }) {
             >
               <div style={{ fontSize: 48, marginBottom: 16 }}>{cat.icon}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{cat.key}</div>
-              <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 20, lineHeight: 1.6 }}>{cat.desc}</div>
+              <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 12, lineHeight: 1.6 }}>{cat.desc}</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 16 }}>
+                Measures: {[...new Set(QUIZ_SKILLS[cat.key])].join(' · ')}
+              </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
                 <span className="badge badge-primary">{cat.difficulty}</span>
                 <span className="badge badge-gray"><Clock size={10} /> {cat.time}</span>
-                <span className="badge badge-gray">5 Questions</span>
+                <span className="badge badge-gray">{QUIZ_QUESTIONS[cat.key].length} Questions</span>
               </div>
               <button className="btn btn-sm" style={{ background: `linear-gradient(135deg, ${cat.color}, ${cat.color}cc)`, color: 'white', width: '100%' }}>
                 Start Assessment <ChevronRight size={14} />
@@ -95,14 +116,21 @@ export default function SkillAssessment({ onNavigate }) {
         {/* Completed */}
         <div style={{ marginTop: 32 }}>
           <div className="section-title" style={{ marginBottom: 16 }}>✅ Completed Assessments</div>
-          {['Core CS Fundamentals', 'Python & Data Science'].map((a, i) => (
+          {assessments.length === 0 && (
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>
+              None yet. Your profile currently uses self-declared skill levels; take an assessment to replace them with verified scores.
+            </div>
+          )}
+          {assessments.map((a, i) => (
             <div key={i} className="gap-card" style={{ marginBottom: 8 }}>
               <CheckCircle size={18} color="#10b981" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{a}</div>
-                <div style={{ fontSize: 12, color: '#9ca3af' }}>Score: {i === 0 ? '84' : '76'}% · Taken {i === 0 ? '3' : '7'} days ago</div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{a.category}</div>
+                <div style={{ fontSize: 12, color: '#9ca3af' }}>
+                  Score: {a.score}% · {new Date(a.at).toLocaleString()} · {Object.entries(a.skillResults).map(([sk, v]) => `${sk} ${v}%`).join(', ')}
+                </div>
               </div>
-              <button className="btn btn-ghost btn-sm"><RefreshCw size={12} /> Retake</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => startQuiz(a.category)}><RefreshCw size={12} /> Retake</button>
             </div>
           ))}
         </div>
@@ -143,8 +171,30 @@ export default function SkillAssessment({ onNavigate }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <div className="card" style={{ textAlign: 'left', marginBottom: 32 }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Skill profile updated</div>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 14 }}>
+            First verified result replaces a self-declared level; later results are averaged with your previous verified level.
+          </div>
+          {Object.entries(changes).map(([sk, c]) => {
+            const delta = c.before == null ? null : c.after - c.before;
+            return (
+              <div key={sk} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1px solid #f3f4f6', fontSize: 14 }}>
+                <span style={{ fontWeight: 600 }}>{sk}</span>
+                <span style={{ color: '#6b7280' }}>
+                  Test: {c.pct}% · Profile: {c.before == null ? 'new' : `${c.before}%`} → <strong style={{ color: '#111827' }}>{c.after}%</strong>
+                  {delta != null && delta !== 0 && (
+                    <strong style={{ marginLeft: 8, color: delta > 0 ? '#10b981' : '#f43f5e' }}>{delta > 0 ? '+' : ''}{delta}</strong>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn btn-ghost" onClick={() => setPhase('select')}>← Back to Assessments</button>
+          <button className="btn btn-ghost" onClick={() => onNavigate('internships')}>See Updated Matches</button>
           <button className="btn btn-primary" onClick={() => onNavigate('skill-gap')}>
             View Skill Gap <ArrowRight size={14} />
           </button>
@@ -224,15 +274,16 @@ export default function SkillAssessment({ onNavigate }) {
         )}
       </div>
 
+      {submitError && <div className="auth-error" role="alert">{submitError}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button className="btn btn-ghost" onClick={() => setPhase('select')}>Exit</button>
         <button
           className={`btn ${revealed ? 'btn-primary' : 'btn-ghost'}`}
           onClick={handleNext}
-          disabled={!revealed}
+          disabled={!revealed || submitting}
           style={{ opacity: revealed ? 1 : 0.4 }}
         >
-          {currentQ < questions.length - 1 ? 'Next Question' : 'Finish'} <ChevronRight size={14} />
+          {currentQ < questions.length - 1 ? 'Next Question' : submitting ? 'Submitting…' : 'Finish'} <ChevronRight size={14} />
         </button>
       </div>
     </div>

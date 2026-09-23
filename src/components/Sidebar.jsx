@@ -1,70 +1,56 @@
 import {
-  LayoutDashboard, Brain, Map, Briefcase, BookOpen, UserCheck,
-  Award, Users, BarChart3, GraduationCap, Building2,
+  LayoutDashboard, Brain, Briefcase, BookOpen, UserCheck,
+  Award, Users, GraduationCap, Building2,
   FlaskConical, Megaphone, ClipboardList, TrendingUp, Target,
-  FileText, Star, Network, Layers
+  Star, Beaker
 } from 'lucide-react';
 
 const SIDEBAR_CONFIG = {
   student: [
     { label: 'Overview', items: [
-      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-      { id: 'assessment', icon: Brain, label: 'Skill Assessment', badge: 'NEW' },
-      { id: 'skill-gap', icon: Target, label: 'Skill Gap Analysis', badge: null },
+      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { id: 'assessment', icon: Brain, label: 'Skill Assessment' },
+      { id: 'skill-gap', icon: Target, label: 'Skill Gap Analysis' },
     ]},
     { label: 'Opportunities', items: [
-      { id: 'internships', icon: Briefcase, label: 'Internships & Jobs', badge: '25' },
-      { id: 'learning', icon: BookOpen, label: 'Learning Pathways', badge: null },
-      { id: 'mentorship', icon: UserCheck, label: 'Mentorship', badge: '3' },
+      { id: 'internships', icon: Briefcase, label: 'Internships & Jobs' },
+      { id: 'learning', icon: BookOpen, label: 'Learning Pathways' },
     ]},
     { label: 'Profile', items: [
-      { id: 'portfolio', icon: Award, label: 'Digital Portfolio', badge: null },
-      { id: 'applications', icon: ClipboardList, label: 'My Applications', badge: '2' },
+      { id: 'portfolio', icon: Award, label: 'Digital Portfolio' },
+      { id: 'applications', icon: ClipboardList, label: 'My Applications' },
     ]}
   ],
   faculty: [
     { label: 'Overview', items: [
-      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-      { id: 'fdp', icon: GraduationCap, label: 'FDP Programs', badge: '6' },
-      { id: 'industrial', icon: Building2, label: 'Industrial Training', badge: null },
+      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { id: 'fdp', icon: GraduationCap, label: 'FDP Programs' },
+      { id: 'industrial', icon: Building2, label: 'Industrial Training' },
     ]},
     { label: 'Collaboration', items: [
-      { id: 'consultancy', icon: FlaskConical, label: 'Consultancy & R&D', badge: '2' },
-      { id: 'guest-lectures', icon: Megaphone, label: 'Guest Lectures', badge: null },
-      { id: 'mentorship', icon: Users, label: 'Student Mentorship', badge: '12' },
-    ]},
-    { label: 'Profile', items: [
-      { id: 'publications', icon: FileText, label: 'Publications & Patents', badge: null },
+      { id: 'consultancy', icon: FlaskConical, label: 'Consultancy & R&D' },
+      { id: 'guest-lectures', icon: Megaphone, label: 'Guest Lectures' },
+      { id: 'research', icon: Beaker, label: 'Research Projects' },
     ]}
   ],
   industry: [
     { label: 'Recruitment', items: [
-      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-      { id: 'post-job', icon: Briefcase, label: 'Post Opportunities', badge: null },
-      { id: 'talent', icon: Users, label: 'Talent Discovery', badge: '128' },
-      { id: 'pipeline', icon: Layers, label: 'ATS Pipeline', badge: '6' },
+      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { id: 'post-job', icon: Briefcase, label: 'Post Opportunities' },
+      { id: 'talent', icon: Users, label: 'Talent Discovery' },
     ]},
     { label: 'Programs', items: [
-      { id: 'programs', icon: BookOpen, label: 'Training Programs', badge: null },
-      { id: 'challenges', icon: Star, label: 'Challenges & Hackathons', badge: null },
-    ]},
-    { label: 'Analytics', items: [
-      { id: 'analytics', icon: BarChart3, label: 'Recruitment Analytics', badge: null },
+      { id: 'programs', icon: BookOpen, label: 'Training Programs' },
+      { id: 'challenges', icon: Star, label: 'Innovation Challenges' },
     ]}
   ],
   institution: [
     { label: 'Overview', items: [
-      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-      { id: 'pri', icon: TrendingUp, label: 'Placement Readiness', badge: null },
-      { id: 'skill-heatmap', icon: Map, label: 'Skill Gap Heatmap', badge: null },
+      { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { id: 'pri', icon: TrendingUp, label: 'Placement Readiness' },
     ]},
-    { label: 'Analytics', items: [
-      { id: 'analytics', icon: BarChart3, label: 'Recruitment Analytics', badge: null },
-      { id: 'students', icon: Users, label: 'Student Tracker', badge: null },
-    ]},
-    { label: 'Management', items: [
-      { id: 'verification', icon: UserCheck, label: 'Credential Verification', badge: '14' },
-      { id: 'companies', icon: Building2, label: 'Company Relations', badge: null },
+    { label: 'Students', items: [
+      { id: 'verification', icon: UserCheck, label: 'Credential Verification' },
     ]}
   ]
 };
@@ -87,8 +73,7 @@ export default function Sidebar({ role, activePage, onPageChange }) {
               >
                 <Icon size={16} />
                 <span style={{ flex: 1 }}>{item.label}</span>
-                {item.badge && <span className="sidebar-badge">{item.badge}</span>}
-              </button>
+                              </button>
             );
           })}
         </div>

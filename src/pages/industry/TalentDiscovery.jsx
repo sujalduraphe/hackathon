@@ -1,46 +1,103 @@
 import { useState } from 'react';
-import { Search, Filter, ChevronRight, Eye, Star, Check, MessageCircle, GraduationCap } from 'lucide-react';
-import { CANDIDATES } from '../../data/store';
+import { Search, Star, Check, X, GraduationCap, Send } from 'lucide-react';
+import { useAppState, APPLICATION_STAGES, STAGE_LABELS, STAGE_COLORS } from '../../state/AppState';
+import { rankCandidates, matchTier, TIER_COLOR } from '../../lib/matching';
 
-const PIPELINE_STAGES = ['applied', 'shortlisted', 'assessment', 'interview', 'offered'];
-const STAGE_LABELS = { applied: 'Applied', shortlisted: 'Shortlisted', assessment: 'Assessment', interview: 'Tech Interview', offered: 'Offered' };
-const STAGE_COLORS = { applied: '#6366f1', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981' };
+const NEXT_ACTION = {
+  applied: { to: 'shortlisted', label: 'Shortlist', icon: Star, cls: 'btn-amber' },
+  shortlisted: { to: 'assessment', label: 'Send Assessment', icon: Send, cls: 'btn-cyan' },
+  assessment: { to: 'interview', label: 'Schedule Interview', icon: null, cls: 'btn-rose' },
+  interview: { to: 'offered', label: 'Make Offer', icon: Check, cls: 'btn-emerald' },
+};
+
+const STATUS_COLOR = { strong: '#10b981', partial: '#f59e0b', missing: '#f43f5e' };
 
 export default function TalentDiscovery() {
+  const { jobs, candidates, applications, setApplicationStatus, openResume } = useAppState();
+  const [jobId, setJobId] = useState(jobs[0]?.id);
+  const [tab, setTab] = useState('applicants');
   const [search, setSearch] = useState('');
   const [minMatch, setMinMatch] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [candidates, setCandidates] = useState(CANDIDATES);
+  const [selectedId, setSelectedId] = useState(null);
 
-  function moveStage(id, newStage) {
-    setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStage } : c));
+  const [actionError, setActionError] = useState('');
+  const job = jobs.find(j => j.id === jobId) || jobs[0];
+
+  async function move(appId, status) {
+    setActionError('');
+    try { await setApplicationStatus(appId, status); } catch (err) { setActionError(err.message); }
   }
 
-  const filtered = candidates
+  if (!job) {
+    return (
+      <div className="animate-fade-in">
+        <div className="page-hero">
+          <h1 className="page-hero-title">🔍 Talent Discovery</h1>
+          <p className="page-hero-subtitle">Candidates are ranked against one of your postings.</p>
+        </div>
+        <div className="card" style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
+          You haven't posted any opportunities yet. Post one to see ranked candidates.
+        </div>
+      </div>
+    );
+  }
+
+  const jobApps = applications.filter(a => a.jobId === job.id);
+  const appByCandidate = Object.fromEntries(jobApps.map(a => [a.candidateId, a]));
+
+  const ranked = rankCandidates(candidates, job)
+    .map(c => ({ ...c, application: appByCandidate[c.id] }))
+    .filter(c => (tab === 'applicants' ? c.application : !c.application))
     .filter(c => {
-      const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.college.toLowerCase().includes(search.toLowerCase()) ||
-        Object.keys(c.skills).some(s => s.toLowerCase().includes(search.toLowerCase()));
-      return matchSearch && c.match >= minMatch;
-    })
-    .sort((a, b) => b.match - a.match);
+      const q = search.toLowerCase();
+      const matchSearch = c.name.toLowerCase().includes(q) ||
+        (c.college || '').toLowerCase().includes(q) ||
+        Object.keys(c.skills).some(s => s.toLowerCase().includes(q));
+      return matchSearch && c.match.score >= minMatch;
+    });
+
+  const selected = ranked.find(c => c.id === selectedId);
+  const applicantCount = jobApps.length;
 
   return (
     <div className="animate-fade-in">
       <div className="page-hero">
         <h1 className="page-hero-title">🔍 Talent Discovery</h1>
-        <p className="page-hero-subtitle">Find and shortlist top candidates from across universities. Filter by skills, CGPA, and match score.</p>
+        <p className="page-hero-subtitle">Candidates ranked by verified skill match for a specific opening, with the reason for every score.</p>
+      </div>
+
+      {/* Job selector */}
+      <div className="card" style={{ marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <label className="form-label">Ranking candidates for</label>
+          <select className="form-select" value={job.id} onChange={e => { setJobId(e.target.value); setSelectedId(null); }}>
+            {jobs.map(j => (
+              <option key={j.id} value={j.id}>{j.title} ({j.applicants || 0} applicants)</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ fontSize: 13, color: '#6b7280' }}>
+          Requires: {job.skills.join(', ')} at {job.minSkillLevel || 60}%+{job.minCGPA ? ` · CGPA ≥ ${job.minCGPA}` : ''}
+        </div>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div className="search-bar" style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className={`btn btn-sm ${tab === 'applicants' ? 'btn-rose' : 'btn-ghost'}`} onClick={() => setTab('applicants')}>
+            Applicants ({applicantCount})
+          </button>
+          <button className={`btn btn-sm ${tab === 'recommended' ? 'btn-rose' : 'btn-ghost'}`} onClick={() => setTab('recommended')}>
+            Recommended, not applied ({candidates.length - applicantCount})
+          </button>
+        </div>
+        <div className="search-bar" style={{ flex: 1, minWidth: 220 }}>
           <Search size={14} className="search-icon" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search candidates, colleges, skills..." />
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 13, color: '#9ca3af' }}>Min Match:</span>
-          {[0, 70, 80, 90].map(m => (
+          {[0, 60, 80].map(m => (
             <button key={m} className={`btn btn-sm ${minMatch === m ? 'btn-rose' : 'btn-ghost'}`} onClick={() => setMinMatch(m)}>
               {m === 0 ? 'All' : `${m}%+`}
             </button>
@@ -48,90 +105,84 @@ export default function TalentDiscovery() {
         </div>
       </div>
 
-      <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 16 }}>
-        {filtered.length} candidates found
-      </div>
+      {actionError && <div className="auth-error" role="alert">{actionError}</div>}
+      {ranked.length === 0 && (
+        <div className="card" style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
+          {tab === 'applicants' ? 'No applicants match these filters yet.' : 'Every candidate in the pool has already applied.'}
+        </div>
+      )}
 
       {/* Candidate Cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.map(c => (
-          <div key={c.id} className="card" style={{ padding: 20, cursor: 'pointer' }} onClick={() => setSelected(c)}>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              {/* Avatar */}
-              <div style={{
-                width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-                background: `linear-gradient(135deg, ${c.match >= 90 ? '#10b981' : c.match >= 75 ? '#6366f1' : '#f59e0b'}, ${c.match >= 90 ? '#059669' : c.match >= 75 ? '#4f46e5' : '#d97706'})`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18,
-                boxShadow: `0 0 20px ${c.match >= 90 ? 'rgba(16,185,129,0.3)' : c.match >= 75 ? 'rgba(99,102,241,0.3)' : 'rgba(245,158,11,0.3)'}`
-              }}>{c.avatar}</div>
-
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: 16 }}>{c.name}</span>
-                  <span className={`badge ${c.status === 'offered' ? 'badge-emerald' : c.status === 'interview' ? 'badge-cyan' : c.status === 'shortlisted' ? 'badge-amber' : 'badge-gray'}`}>
-                    {STAGE_LABELS[c.status]}
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
-                  <GraduationCap size={12} style={{ display: 'inline', marginRight: 4 }} />
-                  {c.college} · {c.dept} · {c.year} Year · CGPA: <strong style={{ color: '#10b981' }}>{c.cgpa}</strong>
-                </div>
-                <div className="skill-tags">
-                  {Object.entries(c.skills).map(([sk, v]) => (
-                    <span key={sk} className="tag">{sk}: {v}%</span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        {ranked.map((c, rank) => {
+          const color = TIER_COLOR[matchTier(c.match.score)];
+          const app = c.application;
+          const next = app && NEXT_ACTION[app.status];
+          return (
+            <div key={c.id} className="card" style={{ padding: 20, cursor: 'pointer' }} onClick={() => setSelectedId(c.id)}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{
-                  fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-display)', lineHeight: 1,
-                  color: c.match >= 90 ? '#10b981' : c.match >= 75 ? '#6366f1' : '#f59e0b'
-                }}>{c.match}%</div>
-                <div style={{ fontSize: 11, color: '#9ca3af' }}>match score</div>
-                <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
-                  Assessment: <strong style={{ color: '#6366f1' }}>{c.assessmentScore}%</strong>
+                  width: 52, height: 52, borderRadius: '50%', flexShrink: 0, color: 'white',
+                  background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18
+                }}>{c.avatar}</div>
+
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>#{rank + 1}</span>
+                    <span style={{ fontWeight: 700, fontSize: 16 }}>{c.name}</span>
+                    {app && (
+                      <span className="badge" style={{ background: `${STAGE_COLORS[app.status]}22`, color: STAGE_COLORS[app.status] }}>
+                        {STAGE_LABELS[app.status]}
+                      </span>
+                    )}
+                    {!c.match.eligible && <span className="badge badge-rose">Below CGPA cut-off</span>}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
+                    <GraduationCap size={12} style={{ display: 'inline', marginRight: 4 }} />
+                    {c.college} · {c.dept} · {c.year} Year · CGPA: <strong style={{ color: '#10b981' }}>{c.cgpa}</strong>
+                  </div>
+                  <div className="skill-tags">
+                    {c.match.breakdown.map(b => (
+                      <span key={b.skill} className="tag" style={{ color: STATUS_COLOR[b.status], borderColor: STATUS_COLOR[b.status] + '55' }}>
+                        {b.skill}: {b.level}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-display)', lineHeight: 1, color }}>{c.match.score}%</div>
+                  <div style={{ fontSize: 11, color: '#9ca3af' }}>skill match</div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
-              <button className="btn btn-ghost btn-sm" onClick={e => e.stopPropagation()}>
-                <MessageCircle size={12} /> Message
-              </button>
-              {c.status === 'applied' && (
-                <button className="btn btn-amber btn-sm" onClick={e => { e.stopPropagation(); moveStage(c.id, 'shortlisted'); }}>
-                  <Star size={12} /> Shortlist
-                </button>
-              )}
-              {c.status === 'shortlisted' && (
-                <button className="btn btn-cyan btn-sm" onClick={e => { e.stopPropagation(); moveStage(c.id, 'assessment'); }}>
-                  Send Assessment
-                </button>
-              )}
-              {c.status === 'assessment' && (
-                <button className="btn btn-rose btn-sm" onClick={e => { e.stopPropagation(); moveStage(c.id, 'interview'); }}>
-                  Schedule Interview
-                </button>
-              )}
-              {c.status === 'interview' && (
-                <button className="btn btn-emerald btn-sm" onClick={e => { e.stopPropagation(); moveStage(c.id, 'offered'); }}>
-                  <Check size={12} /> Make Offer
-                </button>
-              )}
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>{c.match.reasons.join(' · ')}</div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+                {app && app.status !== 'offered' && app.status !== 'rejected' && (
+                  <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); move(app.id, 'rejected'); }}>
+                    <X size={12} /> Reject
+                  </button>
+                )}
+                {next && (
+                  <button className={`btn ${next.cls} btn-sm`} onClick={e => { e.stopPropagation(); move(app.id, next.to); }}>
+                    {next.icon && <next.icon size={12} />} {next.label}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Detail Modal */}
       {selected && (
-        <div className="modal-overlay" onClick={() => setSelected(null)}>
+        <div className="modal-overlay" onClick={() => setSelectedId(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24 }}>
               <div style={{
-                width: 64, height: 64, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                width: 64, height: 64, borderRadius: '50%', color: 'white',
+                background: TIER_COLOR[matchTier(selected.match.score)],
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 22
               }}>{selected.avatar}</div>
               <div>
@@ -139,54 +190,67 @@ export default function TalentDiscovery() {
                 <div style={{ color: '#9ca3af' }}>{selected.college} · {selected.dept}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                   <span className="badge badge-primary">CGPA: {selected.cgpa}</span>
-                  <span className="badge badge-emerald">{selected.match}% match</span>
-                  <span className="badge badge-amber">Assessment: {selected.assessmentScore}%</span>
+                  <span className="badge badge-emerald">{selected.match.score}% match for {job.title}</span>
                 </div>
               </div>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontWeight: 600, marginBottom: 10 }}>Skill Proficiency</div>
-              {Object.entries(selected.skills).map(([sk, v]) => {
-                const color = v >= 80 ? '#10b981' : v >= 65 ? '#f59e0b' : '#f43f5e';
-                return (
-                  <div key={sk} className="progress-container" style={{ marginBottom: 10 }}>
-                    <div className="progress-label">
-                      <span>{sk}</span>
-                      <span style={{ color, fontWeight: 600 }}>{v}%</span>
-                    </div>
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${v}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)` }} />
-                    </div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Match breakdown</div>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>
+                Candidate level ÷ required level ({selected.match.target}%) per skill, capped at 100%, averaged.
+              </div>
+              {selected.match.breakdown.map(b => (
+                <div key={b.skill} className="progress-container" style={{ marginBottom: 10 }}>
+                  <div className="progress-label">
+                    <span>{b.skill}</span>
+                    <span style={{ color: STATUS_COLOR[b.status], fontWeight: 600 }}>{b.level}% / {b.target}%</span>
                   </div>
-                );
-              })}
+                  <div className="progress-track">
+                    <div className="progress-fill" style={{ width: `${Math.round(b.readiness * 100)}%`, background: STATUS_COLOR[b.status] }} />
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>Current Stage</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {PIPELINE_STAGES.map((s, i) => (
-                  <div key={s} style={{
-                    flex: 1, textAlign: 'center', padding: '6px 4px',
-                    borderRadius: 6, fontSize: 10, fontWeight: 600,
-                    background: selected.status === s ? `${STAGE_COLORS[s]}22` : 'rgba(255,255,255,0.04)',
-                    color: selected.status === s ? STAGE_COLORS[s] : 'rgba(255,255,255,0.2)',
-                    border: selected.status === s ? `1px solid ${STAGE_COLORS[s]}44` : '1px solid rgba(255,255,255,0.06)'
-                  }}>
-                    {STAGE_LABELS[s]}
-                  </div>
-                ))}
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>Other skills on profile</div>
+              <div className="skill-tags">
+                {Object.entries(selected.skills)
+                  .filter(([sk]) => !job.skills.includes(sk))
+                  .map(([sk, v]) => <span key={sk} className="tag">{sk}: {v}%</span>)}
               </div>
             </div>
 
+            {selected.application && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Current Stage</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {APPLICATION_STAGES.map(s => {
+                    const active = selected.application.status === s;
+                    return (
+                      <div key={s} style={{
+                        flex: 1, textAlign: 'center', padding: '6px 4px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+                        background: active ? `${STAGE_COLORS[s]}22` : '#f9fafb',
+                        color: active ? STAGE_COLORS[s] : '#9ca3af',
+                        border: `1px solid ${active ? STAGE_COLORS[s] + '44' : '#e5e7eb'}`
+                      }}>
+                        {STAGE_LABELS[s]}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-ghost" style={{ flex: 1 }}>
-                <MessageCircle size={14} /> Message Candidate
-              </button>
-              <button className="btn btn-rose" style={{ flex: 1 }}>
-                <Eye size={14} /> View Full Portfolio
-              </button>
+              {selected.resume && (
+                <button className="btn btn-primary" style={{ flex: 1 }}
+                  onClick={() => openResume(selected.id).catch(err => setActionError(err.message))}>
+                  View resume
+                </button>
+              )}
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setSelectedId(null)}>Close</button>
             </div>
           </div>
         </div>

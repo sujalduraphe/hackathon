@@ -38,7 +38,6 @@ export const CURRENT_USER = {
     },
     completedAssessments: ['Core CS Fundamentals', 'Python & Data Science'],
     appliedJobs: [1, 3, 5],
-    certifications: ['Python for Data Science - Coursera', 'React Basics - Udemy'],
     projects: [
       { title: 'Smart Campus App', tech: ['React', 'Node.js', 'MongoDB'], verified: true, github: '#' },
       { title: 'Crop Disease Detection', tech: ['Python', 'TensorFlow', 'OpenCV'], verified: true, github: '#' },
@@ -195,7 +194,6 @@ export const FACULTY_PROGRAMS = [
     skills: ['TensorFlow', 'PyTorch', 'Transformers', 'LLMs'],
     color: '#4285f4',
     description: 'Intensive program on state-of-the-art deep learning architectures including LLMs and multimodal AI systems.',
-    certificate: true
   },
   {
     id: 2, type: 'Industrial Internship', icon: '🏭',
@@ -207,19 +205,17 @@ export const FACULTY_PROGRAMS = [
     skills: ['IoT', 'Industrial AI', 'SCADA', 'Data Analytics'],
     color: '#00447c',
     description: 'Hands-on exposure to smart manufacturing processes, IoT sensor integration, and AI-driven quality control systems.',
-    certificate: true
   },
   {
     id: 3, type: 'FDP', icon: '☁️',
-    title: 'Cloud Architecture & DevOps Certification',
+    title: 'Cloud Architecture & DevOps',
     organizer: 'Amazon Web Services', duration: '3 Days',
     mode: 'Hybrid', date: '2026-11-20',
     seats: 80, registered: 67,
     stipend: '₹3,000 + AWS Credits',
     skills: ['AWS', 'Terraform', 'Kubernetes', 'CI/CD'],
     color: '#ff9900',
-    description: 'Earn AWS Solutions Architect certification training and learn production-grade DevOps practices.',
-    certificate: true
+    description: 'Learn AWS solutions architecture and production-grade DevOps practices.',
   },
   {
     id: 4, type: 'Consultancy', icon: '🔬',
@@ -231,7 +227,6 @@ export const FACULTY_PROGRAMS = [
     skills: ['Optimization Algorithms', 'MATLAB', 'Power Systems', 'AI'],
     color: '#1a73e8',
     description: 'Develop AI-based optimization algorithm for renewable energy load balancing in smart grid infrastructure.',
-    certificate: false
   },
   {
     id: 5, type: 'Guest Lecture', icon: '🎤',
@@ -243,7 +238,6 @@ export const FACULTY_PROGRAMS = [
     skills: ['Generative AI', 'CUDA', 'LLM Deployment'],
     color: '#76b900',
     description: 'Expert session on deploying LLMs in enterprise workflows, RAG architectures, and NVIDIA NIM platform.',
-    certificate: false
   },
   {
     id: 6, type: 'R&D Project', icon: '🧪',
@@ -255,7 +249,6 @@ export const FACULTY_PROGRAMS = [
     skills: ['NLP', 'Transformers', 'Python', 'Sanskrit/Tamil NLP'],
     color: '#0d47a1',
     description: 'Research partnership to build multilingual NLP models for 22 scheduled Indian languages.',
-    certificate: true
   }
 ];
 
@@ -481,7 +474,53 @@ export const QUIZ_QUESTIONS = {
       correct: 2,
       explanation: 'CORS (Cross-Origin Resource Sharing) is a browser mechanism that controls cross-domain HTTP requests for security.'
     }
+  ],
+  'Soft Skills & Aptitude': [
+    {
+      id: 1,
+      question: 'A teammate keeps missing deadlines, delaying your group project. What is the best first step?',
+      options: ['Report them to the professor immediately', 'Talk to them privately to understand the cause and agree a plan', 'Quietly do their share yourself', 'Raise it angrily in the next group meeting'],
+      correct: 1,
+      explanation: 'A private, solution-focused conversation resolves most issues and preserves trust; escalate only if that fails.'
+    },
+    {
+      id: 2,
+      question: 'You must explain a technical delay to a non-technical manager. Which approach works best?',
+      options: ['Share the full error logs', 'Lead with the impact and new timeline, then give a one-line cause', 'Avoid mentioning it until it is fixed', 'Explain every technical detail so they trust you'],
+      correct: 1,
+      explanation: 'Audience-aware communication leads with what the listener needs: impact, timeline, and what you need from them.'
+    },
+    {
+      id: 3,
+      question: 'You are leading a team of four with conflicting ideas for the project design. What should you do?',
+      options: ['Pick your own idea to save time', 'Let the loudest member decide', 'Set evaluation criteria together, compare options against them, then decide', 'Combine all ideas into one design'],
+      correct: 2,
+      explanation: 'Agreeing on criteria first turns opinion clashes into an objective comparison the whole team can accept.'
+    },
+    {
+      id: 4,
+      question: 'A train 120 m long passes a pole in 6 seconds. What is its speed?',
+      options: ['20 km/h', '60 km/h', '72 km/h', '80 km/h'],
+      correct: 2,
+      explanation: 'Speed = 120 m / 6 s = 20 m/s = 20 × 18/5 = 72 km/h.'
+    },
+    {
+      id: 5,
+      question: 'Find the next number in the series: 2, 6, 12, 20, 30, ?',
+      options: ['40', '42', '44', '36'],
+      correct: 1,
+      explanation: 'Differences are 4, 6, 8, 10, so the next difference is 12: 30 + 12 = 42 (the series is n × (n+1)).'
+    }
   ]
+};
+
+// Which skill each question measures, by category and question position.
+// Used to turn a quiz result into per-skill evidence on the student's profile.
+export const QUIZ_SKILLS = {
+  'Core CS': ['Data Structures', 'Data Structures', 'Data Structures', 'Data Structures', 'System Design'],
+  'Python & ML': ['Machine Learning', 'Machine Learning', 'Machine Learning', 'Python', 'Data Analysis'],
+  'Web Development': ['REST APIs', 'React', 'REST APIs', 'JavaScript', 'REST APIs'],
+  'Soft Skills & Aptitude': ['Teamwork', 'Communication', 'Leadership', 'Problem Solving', 'Problem Solving'],
 };
 
 export const LEARNING_PATHS = [
@@ -509,8 +548,8 @@ export const LEARNING_PATHS = [
     path: [
       { step: 'Cloud Fundamentals', duration: '1 week', resource: 'AWS Free Tier', type: 'free' },
       { step: 'AWS Core Services (EC2, S3, RDS)', duration: '3 weeks', resource: 'AWS Skill Builder', type: 'free' },
-      { step: 'AWS Solutions Architect (SAA)', duration: '6 weeks', resource: 'Adrian Cantrill', type: 'paid' },
-      { step: 'Practice Exams & Certification', duration: '2 weeks', resource: 'Tutorials Dojo', type: 'paid' },
+      { step: 'AWS Solutions Architecture', duration: '6 weeks', resource: 'Adrian Cantrill', type: 'paid' },
+      { step: 'Practice Exams', duration: '2 weeks', resource: 'Tutorials Dojo', type: 'paid' },
     ]
   }
 ];

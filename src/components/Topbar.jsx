@@ -1,22 +1,10 @@
-import { useState } from 'react';
-import { Bell, Search, ChevronDown } from 'lucide-react';
-import { ROLE_META, CURRENT_USER } from '../data/store';
+import { LogOut } from 'lucide-react';
+import { ROLE_META } from '../data/store';
 
-export default function Topbar({ role, onRoleChange }) {
-  const [showNotif, setShowNotif] = useState(false);
-  const meta = ROLE_META[role];
-  const user = CURRENT_USER[role];
+const ROLE_LABEL = { student: 'Student', faculty: 'Academician', industry: 'Industry', institution: 'Institution' };
 
-  const roles = ['student', 'faculty', 'industry', 'institution'];
-  const roleLabels = { student: 'Student', faculty: 'Faculty', industry: 'Industry', institution: 'Institution' };
-
-  const notifications = [
-    { id: 1, text: 'Google shortlisted you for SWE Intern!', time: '2h ago', unread: true, icon: '🔵' },
-    { id: 2, text: 'New FDP: AI & Deep Learning by Google', time: '1d ago', unread: true, icon: '📚' },
-    { id: 3, text: 'Skill Assessment score updated', time: '2d ago', unread: false, icon: '📊' },
-    { id: 4, text: 'New internship at Razorpay matches your profile', time: '3d ago', unread: false, icon: '💳' },
-  ];
-
+export default function Topbar({ user, onLogout }) {
+  const meta = ROLE_META[user.role];
   return (
     <nav className="topbar">
       <div className="topbar-logo">
@@ -24,60 +12,23 @@ export default function Topbar({ role, onRoleChange }) {
         <span className="logo-text">SkillBridge</span>
       </div>
 
-      <div className="topbar-center">
-        {roles.map(r => (
-          <button
-            key={r}
-            className={`role-tab ${role === r ? `active-${r}` : ''}`}
-            onClick={() => onRoleChange(r)}
-          >
-            {ROLE_META[r].icon} {roleLabels[r]}
-          </button>
-        ))}
-      </div>
-
       <div className="topbar-right">
-        <div style={{ position: 'relative' }}>
-          <button className="notif-btn" onClick={() => setShowNotif(!showNotif)}>
-            <Bell size={16} />
-            <span className="notif-dot" />
-          </button>
-          {showNotif && (
-            <div style={{
-              position: 'absolute', right: 0, top: '44px',
-              width: '320px', background: '#ffffff',
-              border: '1px solid #e8eaf0',
-              borderRadius: '16px', padding: '8px',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
-              zIndex: 2000
-            }}>
-              <div style={{ padding: '8px 12px 12px', fontWeight: 600, fontSize: 14, borderBottom: '1px solid #f1f3f8', marginBottom: 8, color: '#111827' }}>
-                Notifications
-              </div>
-              {notifications.map(n => (
-                <div key={n.id} className={`notification-item ${n.unread ? 'unread' : ''}`}>
-                  <span style={{ fontSize: 20 }}>{n.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: n.unread ? '#111827' : '#6b7280' }}>{n.text}</div>
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{n.time}</div>
-                  </div>
-                  {n.unread && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1', flexShrink: 0 }} />}
-                </div>
-              ))}
-            </div>
-          )}
+        <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{user.name}</div>
+          <div style={{ fontSize: 11, color: '#6b7280' }}>
+            {ROLE_LABEL[user.role]}{user.organization ? ` · ${user.organization}` : ''}
+          </div>
         </div>
-
         <div
           className="topbar-avatar"
-          style={{
-            background: `linear-gradient(135deg, ${meta.color}, ${meta.color}99)`,
-            borderColor: `${meta.color}60`
-          }}
-          title={user.name}
+          style={{ background: `linear-gradient(135deg, ${meta.color}, ${meta.color}99)`, borderColor: `${meta.color}60` }}
+          title={user.email}
         >
           {user.avatar}
         </div>
+        <button className="btn btn-ghost btn-sm" onClick={onLogout} title="Log out">
+          <LogOut size={14} /> Log out
+        </button>
       </div>
     </nav>
   );

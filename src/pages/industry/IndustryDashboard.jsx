@@ -1,19 +1,25 @@
-import { useState } from 'react';
-import { Users, Briefcase, TrendingUp, Target, Search, Filter, Eye, ChevronRight, BarChart3 } from 'lucide-react';
-import { CURRENT_USER, CANDIDATES, JOBS } from '../../data/store';
+import { useAppState } from '../../state/AppState';
+import { explainMatch } from '../../lib/matching';
 
 const PIPELINE_STAGES = ['applied', 'shortlisted', 'assessment', 'interview', 'offered'];
 const STAGE_LABELS = { applied: 'Applied', shortlisted: 'Shortlisted', assessment: 'Assessment', interview: 'Tech Interview', offered: 'Offered' };
 const STAGE_COLORS = { applied: '#6366f1', shortlisted: '#f59e0b', assessment: '#06b6d4', interview: '#f43f5e', offered: '#10b981' };
 
 export default function IndustryDashboard({ onNavigate }) {
-  const user = CURRENT_USER.industry;
-  const [activeView, setActiveView] = useState('pipeline');
 
+  const { user, applications, candidates, jobs } = useAppState();
+  const count = st => applications.filter(a => a.status === st).length;
+  // one pipeline card per application, scored against the job applied for
+  const pipeline = applications.map(a => {
+    const c = candidates.find(x => x.id === a.candidateId);
+    const job = jobs.find(j => j.id === a.jobId);
+    return c && job ? { ...c, key: a.id, status: a.status, job, match: explainMatch(c.skills, job, c.cgpa).score } : null;
+  }).filter(Boolean);
   const candidatesByStage = PIPELINE_STAGES.reduce((acc, s) => {
-    acc[s] = CANDIDATES.filter(c => c.status === s);
+    acc[s] = pipeline.filter(c => c.status === s);
     return acc;
   }, {});
+  const topMatched = [...pipeline].sort((a, b) => b.match - a.match).slice(0, 4);
 
   return (
     <div className="animate-fade-in">
@@ -29,7 +35,7 @@ export default function IndustryDashboard({ onNavigate }) {
           </div>
           <div>
             <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}! 🏢</h1>
-            <p className="page-hero-subtitle">{user.role} · {user.company}</p>
+            <p className="page-hero-subtitle">{[user.designation, user.organization].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
 
@@ -39,11 +45,11 @@ export default function IndustryDashboard({ onNavigate }) {
           padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12
         }}>
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>🎯 3 Active Job Postings · 248 Total Applicants</div>
-            <div style={{ fontSize: 13, color: '#9ca3af' }}>SWE Intern deadline in 8 days · Review shortlisted candidates</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>🎯 {jobs.length} active posting{jobs.length === 1 ? '' : 's'} · {applications.length} applicant{applications.length === 1 ? '' : 's'}</div>
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>{count('applied')} new application{count('applied') === 1 ? '' : 's'} awaiting review</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-rose btn-sm" onClick={() => onNavigate('pipeline')}>View Pipeline</button>
+            <button className="btn btn-rose btn-sm" onClick={() => onNavigate('talent')}>Review Candidates</button>
             <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('post-job')}>+ Post Job</button>
           </div>
         </div>
@@ -52,10 +58,10 @@ export default function IndustryDashboard({ onNavigate }) {
       {/* Stats */}
       <div className="stat-grid">
         {[
-          { label: 'Total Applicants', value: '248', icon: '👥', color: '#6366f1', change: '+12 today' },
-          { label: 'Shortlisted', value: '24', icon: '⭐', color: '#f59e0b', change: '4 pending review' },
-          { label: 'In Interview', value: '8', icon: '🎙️', color: '#06b6d4', change: '2 this week' },
-          { label: 'Offers Made', value: '5', icon: '✅', color: '#10b981', change: '3 accepted' },
+          { label: 'Total Applicants', value: applications.length, icon: '👥', color: '#6366f1', change: `across ${jobs.length} posting${jobs.length === 1 ? '' : 's'}` },
+          { label: 'Shortlisted', value: count('shortlisted') + count('assessment'), icon: '⭐', color: '#f59e0b', change: `${count('assessment')} in assessment` },
+          { label: 'In Interview', value: count('interview'), icon: '🎙️', color: '#06b6d4', change: 'current stage' },
+          { label: 'Offers Made', value: count('offered'), icon: '✅', color: '#10b981', change: `${count('rejected')} not selected` },
         ].map((s, i) => (
           <div key={i} className="stat-card">
             <div style={{ fontSize: 32 }}>{s.icon}</div>
@@ -75,7 +81,7 @@ export default function IndustryDashboard({ onNavigate }) {
             <div className="section-title">📋 Recruitment Pipeline (ATS)</div>
             <div className="section-subtitle">Real-time candidate tracking across stages</div>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('pipeline')}>Full View →</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('talent')}>Full View →</button>
         </div>
 
         <div className="pipeline-grid">
@@ -91,7 +97,7 @@ export default function IndustryDashboard({ onNavigate }) {
                   }}>{cs.length}</span>
                 </div>
                 {cs.map(c => (
-                  <div key={c.id} className="pipeline-card" onClick={() => onNavigate('pipeline')}>
+                  <div key={c.key} className="pipeline-card" onClick={() => onNavigate('talent')}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: '50%',
@@ -121,8 +127,8 @@ export default function IndustryDashboard({ onNavigate }) {
       {/* Top Candidates */}
       <div className="section-title" style={{ marginBottom: 16 }}>⭐ Top Matched Candidates</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {CANDIDATES.sort((a, b) => b.match - a.match).slice(0, 4).map(c => (
-          <div key={c.id} className="gap-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate('talent')}>
+        {topMatched.map(c => (
+          <div key={c.key} className="gap-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate('talent')}>
             <div style={{
               width: 44, height: 44, borderRadius: '50%',
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -133,7 +139,7 @@ export default function IndustryDashboard({ onNavigate }) {
                 <div style={{ fontWeight: 700 }}>{c.name}</div>
                 <div style={{ fontWeight: 800, color: c.match >= 90 ? '#10b981' : c.match >= 75 ? '#f59e0b' : '#f43f5e' }}>{c.match}%</div>
               </div>
-              <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{c.college} · {c.dept} · CGPA: {c.cgpa}</div>
+              <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>{c.college} · CGPA: {c.cgpa} · for {c.job.title}</div>
               <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                 {Object.entries(c.skills).slice(0, 3).map(([sk, v]) => (
                   <span key={sk} className="tag">{sk}: {v}%</span>
@@ -143,7 +149,6 @@ export default function IndustryDashboard({ onNavigate }) {
                 </span>
               </div>
             </div>
-            <button className="btn btn-ghost btn-sm"><Eye size={12} /> View</button>
           </div>
         ))}
       </div>

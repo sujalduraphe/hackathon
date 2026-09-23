@@ -1,251 +1,148 @@
-import { supabaseAdmin } from '../config/supabase.js';
-import { computeMatchScore } from '../utils/skillMatcher.js';
+import Student from '../models/Student.js';
+import User from '../models/User.js';
+import { extractText, getDocumentProxy } from 'unpdf';
+import { canonicalSkill, extractSkills } from '../../src/lib/skills.js';
+import { HttpError, plain, toClientStudent } from '../utils/http.js';
+
+/** GET /api/students/me — the logged-in student's skill profile */
+export async function myProfile(req, res) {
+  const s = await Student.findById(req.user.student);
+  if (!s) throw new HttpError(404, 'Student profile not found');
+  res.json(toClientStudent(s));
+}
 
 /**
- * GET /api/students
- * Query: ?dept=CSE&year=3rd&minCgpa=8&skill=Python&search=arjun&page=1&limit=20
- * Access: industry, institution
+ * GET /api/students — the talent pool.
+ * Recruiters see every student; an institution sees only its own college.
  */
 export async function listStudents(req, res) {
-  try {
-    const { dept, year, minCgpa, skill, search, page = 1, limit = 20, jobId } = req.query;
-
-    let query = supabaseAdmin
-      .from('students')
-      .select(`
-        *,
-        users!students_user_id_fkey(id, name, email, avatar, created_at)
-      `)
-      .range((page - 1) * limit, page * limit - 1);
-
-    if (dept) query = query.eq('dept', dept);
-    if (year) query = query.eq('year', year);
-    if (minCgpa) query = query.gte('cgpa', parseFloat(minCgpa));
-
-    const { data: students, error } = await query;
-    if (error) throw error;
-
-    let result = students || [];
-
-    // Filter by skill
-    if (skill) {
-      result = result.filter(s => {
-        const skills = s.skills || {};
-        return Object.keys(skills).some(k => k.toLowerCase().includes(skill.toLowerCase()));
-      });
-    }
-
-    // Search by name
-    if (search) {
-      result = result.filter(s => {
-        const name = s.users?.name || '';
-        return name.toLowerCase().includes(search.toLowerCase());
-      });
-    }
-
-    // Add match scores if jobId is provided
-    if (jobId) {
-      const { data: job } = await supabaseAdmin.from('jobs').select('skills').eq('id', jobId).single();
-      if (job) {
-        result = result.map(s => ({
-          ...s,
-          match: computeMatchScore(s.skills || {}, job.skills || []),
-        })).sort((a, b) => b.match - a.match);
-      }
-    }
-
-    return res.json({ students: result, count: result.length, page: Number(page) });
-  } catch (err) {
-    console.error('[listStudents]', err);
-    return res.status(500).json({ error: 'Failed to list students' });
+  const filter = {};
+  if (req.user.role === 'institution') {
+    const u = await User.findById(req.user.id);
+    filter.college = u.organization;
   }
+  const students = await Student.find(filter).sort({ name: 1 });
+  res.json(students.map(toClientStudent));
+}
+
+const KINDS = {
+  projects: b => ({ title: b.title, description: b.description, link: b.link, tech: Array.isArray(b.tech) ? b.tech : String(b.tech || '').split(',').map(t => t.trim()).filter(Boolean) }),
+  achievements: b => ({ title: b.title, year: b.year, description: b.description }),
+};
+
+function kindOf(req) {
+  const pick = KINDS[req.params.kind];
+  if (!pick) throw new HttpError(404, 'Unknown portfolio section');
+  return pick;
+}
+
+/** POST /api/students/me/portfolio/:kind — add an item (always starts unverified) */
+export async function addPortfolioItem(req, res) {
+  const pick = kindOf(req);
+  const s = await Student.findById(req.user.student);
+  s[req.params.kind].push(pick(req.body));
+  await s.save();
+  res.status(201).json(toClientStudent(s));
+}
+
+/** DELETE /api/students/me/portfolio/:kind/:itemId */
+export async function removePortfolioItem(req, res) {
+  kindOf(req);
+  const s = await Student.findById(req.user.student);
+  const entry = s[req.params.kind].id(req.params.itemId);
+  if (!entry) throw new HttpError(404, 'Item not found');
+  entry.deleteOne();
+  await s.save();
+  res.json(toClientStudent(s));
 }
 
 /**
- * GET /api/students/:id
- * Full profile: user + student + portfolio + assessments + applications
+ * PATCH /api/students/:id/portfolio/:kind/:itemId — institution verifies (or
+ * un-verifies) an item. Only for students of the verifier's own college.
  */
-export async function getStudent(req, res) {
-  try {
-    const { id } = req.params;
-
-    const [userRes, portfolioRes, assessmentsRes, applicationsRes] = await Promise.all([
-      supabaseAdmin
-        .from('students')
-        .select('*, users!students_user_id_fkey(id, name, email, avatar, role, created_at)')
-        .eq('id', id)
-        .single(),
-      supabaseAdmin.from('portfolios').select('*').eq('student_id', id).single(),
-      supabaseAdmin
-        .from('assessments')
-        .select('*')
-        .eq('student_id', id)
-        .order('taken_at', { ascending: false })
-        .limit(10),
-      supabaseAdmin
-        .from('applications')
-        .select('*, jobs(id, title, company, type, stipend, status, deadline)')
-        .eq('student_id', id)
-        .order('applied_at', { ascending: false }),
-    ]);
-
-    if (userRes.error || !userRes.data) {
-      return res.status(404).json({ error: 'Student not found' });
-    }
-
-    return res.json({
-      student: userRes.data,
-      portfolio: portfolioRes.data || null,
-      assessments: assessmentsRes.data || [],
-      applications: applicationsRes.data || [],
-    });
-  } catch (err) {
-    console.error('[getStudent]', err);
-    return res.status(500).json({ error: 'Failed to fetch student' });
-  }
+export async function verifyPortfolioItem(req, res) {
+  kindOf(req);
+  const verifier = await User.findById(req.user.id);
+  const s = await Student.findById(req.params.id);
+  if (!s) throw new HttpError(404, 'Student not found');
+  if (s.college !== verifier.organization) throw new HttpError(403, 'You can only verify students of your own institution');
+  const entry = s[req.params.kind].id(req.params.itemId);
+  if (!entry) throw new HttpError(404, 'Item not found');
+  const verified = req.body.verified !== false;
+  entry.verified = verified;
+  entry.verifiedBy = verified ? verifier._id : undefined;
+  entry.verifiedAt = verified ? new Date() : undefined;
+  await s.save();
+  res.json(toClientStudent(s));
 }
 
 /**
- * PUT /api/students/:id/skills
- * Body: { skills: { Python: 78, React: 55, ... } }
- * Access: owner student only
+ * POST /api/students/me/resume (multipart, field "resume", PDF ≤ 2 MB).
+ * Stores the file and returns the skills detected in its text. Nothing is added
+ * to the profile until the student confirms (see addSkills).
  */
-export async function updateSkills(req, res) {
+export async function uploadResume(req, res) {
+  if (!req.file) throw new HttpError(422, 'Attach a PDF file');
+  let text;
   try {
-    const { id } = req.params;
-    const { skills } = req.body;
-
-    // Verify ownership
-    const { data: student } = await supabaseAdmin
-      .from('students')
-      .select('user_id')
-      .eq('id', id)
-      .single();
-
-    if (!student || student.user_id !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to update this profile' });
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('students')
-      .update({ skills, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Also upsert skill_profiles rows for tracking history
-    const skillRows = Object.entries(skills).map(([skill, proficiency]) => ({
-      student_id: id,
-      skill,
-      proficiency,
-      updated_at: new Date().toISOString(),
-    }));
-
-    await supabaseAdmin
-      .from('skill_profiles')
-      .upsert(skillRows, { onConflict: 'student_id,skill' });
-
-    return res.json({ message: 'Skills updated', student: data });
-  } catch (err) {
-    console.error('[updateSkills]', err);
-    return res.status(500).json({ error: 'Failed to update skills' });
+    const pdf = await getDocumentProxy(new Uint8Array(req.file.buffer));
+    ({ text } = await extractText(pdf, { mergePages: true }));
+  } catch {
+    throw new HttpError(422, 'Could not read this PDF. Try exporting it again from your editor.');
   }
+  const s = await Student.findById(req.user.student);
+  s.resume = { filename: req.file.originalname, size: req.file.size, uploadedAt: new Date(), data: req.file.buffer };
+  await s.save();
+  const detected = extractSkills(text || '').map(({ skill, evidence }) => ({
+    skill, evidence, current: plain(s.skills)[skill] ?? null, source: plain(s.skillSource)[skill] ?? null,
+  }));
+  res.status(201).json({ profile: toClientStudent(s), detected, textFound: Boolean(text?.trim()) });
+}
+
+/** DELETE /api/students/me/resume */
+export async function deleteResume(req, res) {
+  const s = await Student.findById(req.user.student);
+  s.resume = undefined;
+  await s.save();
+  res.json(toClientStudent(s));
 }
 
 /**
- * GET /api/students/:id/applications
+ * GET /api/students/:id/resume — the PDF. Allowed for the student themself,
+ * any recruiter, and the student's own institution.
  */
-export async function getStudentApplications(req, res) {
-  try {
-    const { id } = req.params;
-    const { status } = req.query;
-
-    let query = supabaseAdmin
-      .from('applications')
-      .select('*, jobs(id, title, company, logo, color, type, location, stipend, deadline, status)')
-      .eq('student_id', id)
-      .order('applied_at', { ascending: false });
-
-    if (status) query = query.eq('status', status);
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return res.json({ applications: data || [] });
-  } catch (err) {
-    console.error('[getStudentApplications]', err);
-    return res.status(500).json({ error: 'Failed to fetch applications' });
-  }
+export async function downloadResume(req, res) {
+  const s = await Student.findById(req.params.id).select('+resume.data');
+  if (!s?.resume?.data) throw new HttpError(404, 'No resume uploaded');
+  const { role, student } = req.user;
+  let allowed = role === 'industry' || (role === 'student' && student === String(s._id));
+  if (role === 'institution') allowed = (await User.findById(req.user.id)).organization === s.college;
+  if (!allowed) throw new HttpError(403, 'Not allowed to view this resume');
+  res.set('Content-Type', 'application/pdf');
+  res.set('Content-Disposition', `inline; filename="${encodeURIComponent(s.resume.filename)}"`);
+  res.send(s.resume.data);
 }
 
 /**
- * GET /api/students/:id/assessments
+ * POST /api/students/me/skills — body { skills: { name: level } }.
+ * Adds self-reported levels (e.g. confirmed from a resume). Levels already
+ * verified by an assessment are left untouched.
  */
-export async function getStudentAssessments(req, res) {
-  try {
-    const { id } = req.params;
-
-    const { data, error } = await supabaseAdmin
-      .from('assessments')
-      .select('*')
-      .eq('student_id', id)
-      .order('taken_at', { ascending: false });
-
-    if (error) throw error;
-    return res.json({ assessments: data || [] });
-  } catch (err) {
-    console.error('[getStudentAssessments]', err);
-    return res.status(500).json({ error: 'Failed to fetch assessments' });
+export async function addSkills(req, res) {
+  const input = req.body.skills;
+  if (!input || typeof input !== 'object') throw new HttpError(422, 'skills must be an object of { skill: level }');
+  const s = await Student.findById(req.user.student);
+  const skills = plain(s.skills), source = plain(s.skillSource);
+  for (const [raw, lvl] of Object.entries(input)) {
+    const name = canonicalSkill(raw);
+    const level = Math.round(Number(lvl));
+    if (!name || Number.isNaN(level) || level < 0 || level > 100) throw new HttpError(422, `Invalid level for ${raw}`);
+    if (source[name] === 'assessment') continue;
+    skills[name] = level;
+    source[name] = 'resume';
   }
-}
-
-/**
- * GET /api/students/me/dashboard
- * Returns dashboard summary stats for the logged-in student.
- */
-export async function getStudentDashboard(req, res) {
-  try {
-    const userId = req.user.id;
-
-    const { data: student } = await supabaseAdmin
-      .from('students')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (!student) return res.status(404).json({ error: 'Student profile not found' });
-
-    const [appsRes, assessmentsRes, portfolioRes] = await Promise.all([
-      supabaseAdmin.from('applications').select('status').eq('student_id', student.id),
-      supabaseAdmin.from('assessments').select('category, score').eq('student_id', student.id),
-      supabaseAdmin.from('portfolios').select('*').eq('student_id', student.id).single(),
-    ]);
-
-    const apps = appsRes.data || [];
-    const assessments = assessmentsRes.data || [];
-    const portfolio = portfolioRes.data;
-
-    const skills = student.skills || {};
-    const avgSkill = Object.values(skills).length > 0
-      ? Math.round(Object.values(skills).reduce((a, b) => a + b, 0) / Object.values(skills).length)
-      : 0;
-
-    return res.json({
-      student,
-      stats: {
-        totalApplications: apps.length,
-        shortlisted: apps.filter(a => a.status === 'shortlisted').length,
-        offered: apps.filter(a => a.status === 'offered').length,
-        assessmentsTaken: assessments.length,
-        avgSkillScore: avgSkill,
-        certifications: (portfolio?.certifications || []).length,
-        projects: (portfolio?.projects || []).length,
-      },
-    });
-  } catch (err) {
-    console.error('[getStudentDashboard]', err);
-    return res.status(500).json({ error: 'Failed to fetch dashboard' });
-  }
+  s.skills = skills;
+  s.skillSource = source;
+  await s.save();
+  res.json(toClientStudent(s));
 }

@@ -1,261 +1,59 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import Application, { STAGES } from '../models/Application.js';
+import Job from '../models/Job.js';
+import Student from '../models/Student.js';
+import User from '../models/User.js';
+import { explainMatch } from '../../src/lib/matching.js';
+import { HttpError, plain, toClientApplication } from '../utils/http.js';
 
-/**
- * POST /api/applications
- * Body: { jobId, coverLetter? }
- * Access: student
- */
-export async function applyToJob(req, res) {
-  try {
-    const userId = req.user.id;
-    const { jobId, coverLetter } = req.body;
-
-    // Get student record
-    const { data: student, error: stErr } = await supabaseAdmin
-      .from('students')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (stErr || !student) {
-      return res.status(404).json({ error: 'Student profile not found. Complete your profile first.' });
-    }
-
-    // Check if job exists and is active
-    const { data: job } = await supabaseAdmin
-      .from('jobs')
-      .select('id, title, company, deadline, status, min_cgpa, openings')
-      .eq('id', jobId)
-      .single();
-
-    if (!job) return res.status(404).json({ error: 'Job not found' });
-    if (job.status !== 'active') return res.status(400).json({ error: 'This job is no longer accepting applications' });
-
-    const now = new Date();
-    if (job.deadline && new Date(job.deadline) < now) {
-      return res.status(400).json({ error: 'Application deadline has passed' });
-    }
-
-    // Check duplicate application
-    const { data: existing } = await supabaseAdmin
-      .from('applications')
-      .select('id')
-      .eq('student_id', student.id)
-      .eq('job_id', jobId)
-      .single();
-
-    if (existing) {
-      return res.status(409).json({ error: 'You have already applied to this job' });
-    }
-
-    // Check CGPA requirement
-    const { data: studentData } = await supabaseAdmin
-      .from('students')
-      .select('cgpa')
-      .eq('id', student.id)
-      .single();
-
-    if (job.min_cgpa && studentData?.cgpa < job.min_cgpa) {
-      return res.status(400).json({
-        error: `Your CGPA (${studentData.cgpa}) does not meet the minimum requirement (${job.min_cgpa})`,
-      });
-    }
-
-    // Create application
-    const { data: application, error } = await supabaseAdmin
-      .from('applications')
-      .insert({
-        student_id: student.id,
-        job_id: jobId,
-        status: 'applied',
-        cover_letter: coverLetter || null,
-        applied_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Increment job applicants count
-    await supabaseAdmin.rpc('increment_applicants', { job_id: jobId }).catch(() => {});
-
-    // Create notification for industry
-    await supabaseAdmin.from('notifications').insert({
-      user_id: job.posted_by,
-      type: 'new_application',
-      message: `New application received for "${job.title}"`,
-      metadata: { job_id: jobId, application_id: application.id },
-    }).catch(() => {});
-
-    return res.status(201).json({
-      message: `Successfully applied to ${job.title} at ${job.company}`,
-      application,
-    });
-  } catch (err) {
-    console.error('[applyToJob]', err);
-    return res.status(500).json({ error: 'Failed to submit application' });
-  }
-}
+// Allowed recruiter moves. Rejection is possible from any open stage.
+const NEXT = { applied: 'shortlisted', shortlisted: 'assessment', assessment: 'interview', interview: 'offered' };
 
 /**
  * GET /api/applications
- * Students see their own; industry sees all for their jobs.
+ * Students see their own; recruiters see applications to their postings;
+ * institutions see applications from their college's students.
  */
 export async function listApplications(req, res) {
-  try {
-    const { status, jobId, page = 1, limit = 20 } = req.query;
-    const userId = req.user.id;
-    const role = req.user.role;
-
-    let data = [];
-
-    if (role === 'student') {
-      const { data: student } = await supabaseAdmin
-        .from('students').select('id').eq('user_id', userId).single();
-
-      if (!student) return res.json({ applications: [] });
-
-      let q = supabaseAdmin
-        .from('applications')
-        .select('*, jobs(id, title, company, logo, color, type, location, stipend, deadline, status, posted_by)')
-        .eq('student_id', student.id)
-        .order('applied_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-
-      if (status) q = q.eq('status', status);
-      const { data: apps } = await q;
-      data = apps || [];
-
-    } else if (role === 'industry') {
-      // Get all jobs posted by this user
-      const { data: myJobs } = await supabaseAdmin
-        .from('jobs').select('id').eq('posted_by', userId);
-
-      const jobIds = (myJobs || []).map(j => j.id);
-      if (jobIds.length === 0) return res.json({ applications: [] });
-
-      let q = supabaseAdmin
-        .from('applications')
-        .select(`
-          *,
-          jobs(id, title, company),
-          students!applications_student_id_fkey(
-            id, dept, year, cgpa, skills,
-            users!students_user_id_fkey(id, name, email, avatar)
-          )
-        `)
-        .in('job_id', jobIds)
-        .order('applied_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-
-      if (status) q = q.eq('status', status);
-      if (jobId) q = q.eq('job_id', jobId);
-      const { data: apps } = await q;
-      data = apps || [];
-    }
-
-    return res.json({ applications: data, count: data.length, page: Number(page) });
-  } catch (err) {
-    console.error('[listApplications]', err);
-    return res.status(500).json({ error: 'Failed to list applications' });
-  }
+  let filter;
+  if (req.user.role === 'student') filter = { student: req.user.student };
+  else if (req.user.role === 'industry') filter = { job: { $in: await Job.find({ postedBy: req.user.id }).distinct('_id') } };
+  else if (req.user.role === 'institution') {
+    const u = await User.findById(req.user.id);
+    filter = { student: { $in: await Student.find({ college: u.organization }).distinct('_id') } };
+  } else throw new HttpError(403, 'Not available for this role');
+  const apps = await Application.find(filter).sort({ createdAt: -1 });
+  res.json(apps.map(toClientApplication));
 }
 
-/**
- * PUT /api/applications/:id/status
- * Body: { status: 'shortlisted' | 'interview' | 'offered' | 'rejected', notes? }
- * Access: industry
- */
-export async function updateApplicationStatus(req, res) {
-  try {
-    const { id } = req.params;
-    const { status, notes } = req.body;
+/** POST /api/applications — student applies to a job */
+export async function apply(req, res) {
+  const job = await Job.findById(req.body.jobId);
+  if (!job) throw new HttpError(404, 'Job not found');
+  const student = await Student.findById(req.user.student);
+  const m = explainMatch(plain(student.skills), job.toJSON(), student.cgpa);
+  if (!m.eligible) throw new HttpError(422, `Not eligible: minimum CGPA is ${job.minCGPA}`);
+  if (await Application.exists({ job: job._id, student: student._id })) throw new HttpError(409, 'You have already applied to this job');
 
-    const VALID_STATUSES = ['applied', 'assessment', 'shortlisted', 'interview', 'offered', 'rejected'];
-    if (!VALID_STATUSES.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
-    }
-
-    // Verify the application belongs to a job posted by this user
-    const { data: app } = await supabaseAdmin
-      .from('applications')
-      .select('*, jobs(posted_by, title, company)')
-      .eq('id', id)
-      .single();
-
-    if (!app) return res.status(404).json({ error: 'Application not found' });
-    if (app.jobs?.posted_by !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized to update this application' });
-    }
-
-    const { data: updated, error } = await supabaseAdmin
-      .from('applications')
-      .update({ status, notes: notes || null, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Notify student
-    const { data: student } = await supabaseAdmin
-      .from('students')
-      .select('user_id')
-      .eq('id', app.student_id)
-      .single();
-
-    if (student) {
-      const messages = {
-        shortlisted: `🎉 You've been shortlisted for "${app.jobs.title}" at ${app.jobs.company}!`,
-        interview: `📅 You have an interview scheduled for "${app.jobs.title}" at ${app.jobs.company}`,
-        offered: `🏆 Congratulations! You've received an offer from ${app.jobs.company} for "${app.jobs.title}"!`,
-        rejected: `Your application for "${app.jobs.title}" at ${app.jobs.company} was not selected this time`,
-        assessment: `📝 You've been invited to take an assessment for "${app.jobs.title}" at ${app.jobs.company}`,
-      };
-
-      await supabaseAdmin.from('notifications').insert({
-        user_id: student.user_id,
-        type: `application_${status}`,
-        message: messages[status] || `Application status updated to ${status}`,
-        metadata: { application_id: id, job_id: app.job_id },
-      }).catch(() => {});
-    }
-
-    return res.json({ message: `Application status updated to ${status}`, application: updated });
-  } catch (err) {
-    console.error('[updateApplicationStatus]', err);
-    return res.status(500).json({ error: 'Failed to update status' });
-  }
+  const app = await Application.create({
+    job: job._id, student: student._id, matchAtApply: m.score,
+    history: [{ status: 'applied', by: req.user.id }],
+  });
+  await Job.updateOne({ _id: job._id }, { $inc: { applicants: 1 } });
+  res.status(201).json(toClientApplication(app));
 }
 
-/**
- * DELETE /api/applications/:id
- * Withdraw an application. Access: student (owner)
- */
-export async function withdrawApplication(req, res) {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id;
+/** PATCH /api/applications/:id — recruiter moves an applicant through the pipeline */
+export async function updateStatus(req, res) {
+  const { status } = req.body;
+  if (!STAGES.includes(status)) throw new HttpError(422, `Unknown status: ${status}`);
+  const app = await Application.findById(req.params.id).populate('job');
+  if (!app) throw new HttpError(404, 'Application not found');
+  if (String(app.job.postedBy) !== req.user.id) throw new HttpError(403, 'You can only manage applications to your own postings');
+  const allowed = status === 'rejected' ? !['offered', 'rejected'].includes(app.status) : NEXT[app.status] === status;
+  if (!allowed) throw new HttpError(422, `Cannot move an application from ${app.status} to ${status}`);
 
-    const { data: student } = await supabaseAdmin
-      .from('students').select('id').eq('user_id', userId).single();
-
-    const { data: app } = await supabaseAdmin
-      .from('applications').select('student_id, status').eq('id', id).single();
-
-    if (!app || app.student_id !== student?.id) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    if (['offered', 'interview'].includes(app.status)) {
-      return res.status(400).json({ error: 'Cannot withdraw after reaching interview/offer stage' });
-    }
-
-    await supabaseAdmin.from('applications').delete().eq('id', id);
-
-    return res.json({ message: 'Application withdrawn successfully' });
-  } catch (err) {
-    console.error('[withdrawApplication]', err);
-    return res.status(500).json({ error: 'Failed to withdraw application' });
-  }
+  app.status = status;
+  app.history.push({ status, by: req.user.id });
+  await app.save();
+  res.json(toClientApplication(app));
 }

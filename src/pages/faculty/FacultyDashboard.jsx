@@ -1,15 +1,16 @@
-import { useState } from 'react';
-import { BookOpen, Calendar, Users, Award, ChevronRight, ArrowRight, Star, TrendingUp } from 'lucide-react';
-import { CURRENT_USER, FACULTY_PROGRAMS } from '../../data/store';
+import { Calendar, Users, ArrowRight } from 'lucide-react';
+import { FACULTY_PROGRAMS } from '../../data/store';
+import { useAppState } from '../../state/AppState';
 
 export default function FacultyDashboard({ onNavigate }) {
-  const user = CURRENT_USER.faculty;
+  const { user } = useAppState();
+  const countType = t => FACULTY_PROGRAMS.filter(p => p.type === t).length;
 
   const stats = [
-    { label: 'FDPs Available', value: '6', icon: '📚', color: '#f59e0b' },
-    { label: 'Students Mentored', value: '12', icon: '👥', color: '#10b981' },
-    { label: 'Publications', value: user.publications, icon: '📄', color: '#6366f1' },
-    { label: 'R&D Projects', value: '2', icon: '🔬', color: '#f43f5e' },
+    { label: 'FDPs Available', value: countType('FDP'), icon: '📚', color: '#f59e0b' },
+    { label: 'Industrial Internships', value: countType('Industrial Internship'), icon: '🏭', color: '#10b981' },
+    { label: 'Consultancy Openings', value: countType('Consultancy'), icon: '🔬', color: '#6366f1' },
+    { label: 'Guest Lectures', value: countType('Guest Lecture'), icon: '🎤', color: '#f43f5e' },
   ];
 
   const upcoming = FACULTY_PROGRAMS.slice(0, 3);
@@ -29,7 +30,7 @@ export default function FacultyDashboard({ onNavigate }) {
           </div>
           <div>
             <h1 className="page-hero-title" style={{ fontSize: 28 }}>Welcome, {user.name}! 🎓</h1>
-            <p className="page-hero-subtitle">{user.designation} · {user.dept} · {user.college}</p>
+            <p className="page-hero-subtitle">{[user.designation, user.dept, user.organization].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
 
@@ -102,56 +103,6 @@ export default function FacultyDashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* Bottom Grid */}
-      <div className="grid-2">
-        {/* Research Areas */}
-        <div className="card">
-          <div className="section-title" style={{ marginBottom: 16 }}>🔬 My Specializations</div>
-          {user.specialization.map((s, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '10px 0', borderBottom: i < user.specialization.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none'
-            }}>
-              <Star size={14} color="#f59e0b" />
-              <span style={{ fontWeight: 500 }}>{s}</span>
-              <span className="badge badge-amber" style={{ marginLeft: 'auto' }}>Expert</span>
-            </div>
-          ))}
-          <div style={{ marginTop: 16 }}>
-            <button className="btn btn-ghost btn-sm w-full" onClick={() => onNavigate('consultancy')}>
-              Post for Industry Collaboration <ChevronRight size={12} />
-            </button>
-          </div>
-        </div>
-
-        {/* Students mentored */}
-        <div className="card">
-          <div className="section-title" style={{ marginBottom: 16 }}>👨‍🎓 Students I'm Mentoring</div>
-          {[
-            { name: 'Arjun Sharma', area: 'ML Engineering', year: '3rd Year', progress: 72 },
-            { name: 'Priya Menon', area: 'NLP Research', year: '4th Year', progress: 88 },
-            { name: 'Rohan Gupta', area: 'Cloud DevOps', year: '4th Year', progress: 55 },
-          ].map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center' }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12
-              }}>
-                {s.name.split(' ').map(n => n[0]).join('')}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
-                <div style={{ fontSize: 12, color: '#9ca3af' }}>{s.area} · {s.year}</div>
-              </div>
-              <div style={{ fontSize: 12, color: s.progress >= 75 ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{s.progress}%</div>
-            </div>
-          ))}
-          <button className="btn btn-ghost btn-sm w-full" style={{ marginTop: 12 }} onClick={() => onNavigate('mentorship')}>
-            View All Students <ChevronRight size={12} />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

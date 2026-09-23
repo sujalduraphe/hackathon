@@ -1,224 +1,153 @@
-/**
- * SkillBridge – Database Seed Script
- * Populates Supabase with realistic demo data from store.js
- *
- * Usage: node server/seed.js
- */
+// Seeds a demo database: jobs, a talent pool, one login per role and some
+// applications in different pipeline stages. Wipes existing data first.
+//   npm run seed            (refuses when NODE_ENV=production unless --force)
 
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { createClient } from '@supabase/supabase-js';
+import mongoose from 'mongoose';
+import { connectDB } from './config/db.js';
+import User from './models/User.js';
+import Student from './models/Student.js';
+import Job from './models/Job.js';
+import Application from './models/Application.js';
+import Assessment from './models/Assessment.js';
+import Program from './models/Program.js';
+import Registration from './models/Registration.js';
+import { CURRENT_USER, JOBS, CANDIDATES } from '../src/data/store.js';
+import { canonicalProfile, canonicalSkill } from '../src/lib/skills.js';
+import { explainMatch } from '../src/lib/matching.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+export const DEMO_PASSWORD = 'demo1234';
 
-console.log('🌱 SkillBridge Seed Script Starting...\n');
-
-// ─── Demo Users ───────────────────────────────────────────────────────────────
-const USERS = [
-  { name: 'Arjun Sharma', email: 'arjun@nitk.edu.in', password: 'Password123', role: 'student' },
-  { name: 'Priya Menon', email: 'priya.menon@iitm.edu', password: 'Password123', role: 'student' },
-  { name: 'Rohan Gupta', email: 'rohan@vit.edu', password: 'Password123', role: 'student' },
-  { name: 'Aisha Khan', email: 'aisha@bits.edu', password: 'Password123', role: 'student' },
-  { name: 'Varun Reddy', email: 'varun@nitw.edu', password: 'Password123', role: 'student' },
-  { name: 'Sneha Iyer', email: 'sneha@srm.edu', password: 'Password123', role: 'student' },
-  { name: 'Dr. Priya Nair', email: 'priya.nair@nitk.edu.in', password: 'Password123', role: 'faculty' },
-  { name: 'Prof. Ramesh Kumar', email: 'ramesh@nitk.edu.in', password: 'Password123', role: 'faculty' },
-  { name: 'Rahul Mehta', email: 'rahul@techcorp.io', password: 'Password123', role: 'industry' },
-  { name: 'Anjali Singh', email: 'anjali@google.com', password: 'Password123', role: 'industry' },
-  { name: 'Prof. Suresh Kumar', email: 'placement@nitk.edu.in', password: 'Password123', role: 'institution' },
+// Extra NITK students so the institution dashboard has a cohort to analyse
+const NITK_COHORT = [
+  { name: 'Kavya Rao', dept: 'CSE', year: '4th', cgpa: 8.9, skills: { Python: 82, 'Machine Learning': 74, SQL: 78, 'Data Analysis': 80, Communication: 70 } },
+  { name: 'Nikhil Joshi', dept: 'IT', year: '3rd', cgpa: 7.6, skills: { Java: 72, 'Data Structures': 68, SQL: 60, 'Spring Boot': 55 } },
+  { name: 'Meera Pillai', dept: 'CSE', year: '4th', cgpa: 9.2, skills: { React: 84, JavaScript: 86, 'Node.js': 70, 'REST APIs': 75, Git: 80 } },
+  { name: 'Aditya Kulkarni', dept: 'ECE', year: '3rd', cgpa: 8.1, skills: { 'C++': 76, 'Embedded Systems': 70, 'Signal Processing': 64, Python: 50 } },
+  { name: 'Farhan Ali', dept: 'CSE', year: '2nd', cgpa: 7.2, skills: { Python: 45, 'Data Structures': 40, Communication: 65 } },
 ];
 
-const STUDENT_PROFILES = [
-  { email: 'arjun@nitk.edu.in', college: 'NITK Surathkal', dept: 'CSE', year: '3rd', cgpa: 8.7, skills: { 'Python': 78, 'Machine Learning': 62, 'React.js': 55, 'SQL': 70, 'Node.js': 45, 'Data Structures': 85, 'System Design': 40, 'Cloud (AWS/GCP)': 38, 'Communication': 72, 'Leadership': 60 } },
-  { email: 'priya.menon@iitm.edu', college: 'IIT Madras', dept: 'CSE', year: '4th', cgpa: 9.1, skills: { 'Python': 90, 'Machine Learning': 88, 'TensorFlow': 80, 'SQL': 75, 'Data Structures': 92 } },
-  { email: 'rohan@vit.edu', college: 'VIT Vellore', dept: 'IT', year: '4th', cgpa: 8.2, skills: { 'Java': 82, 'Node.js': 75, 'Cloud (AWS/GCP)': 68, 'SQL': 88 } },
-  { email: 'aisha@bits.edu', college: 'BITS Pilani', dept: 'CS', year: '3rd', cgpa: 9.3, skills: { 'React.js': 88, 'Node.js': 82, 'Python': 75, 'System Design': 70 } },
-  { email: 'varun@nitw.edu', college: 'NITW', dept: 'ECE', year: '4th', cgpa: 7.9, skills: { 'Python': 65, 'Communication': 78, 'Leadership': 72, 'Data Structures': 60 } },
-  { email: 'sneha@srm.edu', college: 'SRM Chennai', dept: 'CSE', year: '3rd', cgpa: 8.5, skills: { 'Python': 84, 'Machine Learning': 76, 'Node.js': 70, 'Docker & Kubernetes': 65 } },
+// [jobIndex, candidateIndex, status, daysAgo] — candidateIndex 0 is Arjun, the demo student
+const SEED_APPLICATIONS = [
+  [0, 0, 'shortlisted', 22], [2, 0, 'applied', 20], [4, 0, 'applied', 18],
+  [4, 1, 'shortlisted', 15], [0, 1, 'applied', 14], [3, 2, 'assessment', 12],
+  [1, 3, 'interview', 11], [5, 4, 'offered', 25], [2, 5, 'applied', 9], [0, 5, 'applied', 8],
+];
+const PIPELINE = ['applied', 'shortlisted', 'assessment', 'interview', 'offered'];
+
+// [kind, organisation, title, duration, mode, startDate, seats, compensation, skills, description]
+const PROGRAMS = [
+  ['training', 'Google', 'Google Cloud Professional Track', '8 Weeks', 'Online', '2026-10-15', 500, 'Free (sponsored)', ['AWS', 'Kubernetes', 'SQL'], 'Cloud fundamentals, compute, networking, data and security with hands-on labs.'],
+  ['training', 'Microsoft', 'Full Stack Web Development Bootcamp', '12 Weeks', 'Hybrid', '2026-11-01', 300, '₹2,999', ['React', 'Node.js', 'Azure', 'TypeScript'], 'Build five real-world projects with industry mentors. Top performers get interview opportunities.'],
+  ['training', 'Flipkart', 'Data Engineering with Spark & Kafka', '6 Weeks', 'Online', '2026-10-20', 150, 'Free', ['Spark', 'Kafka', 'Python', 'SQL'], 'Batch and streaming pipelines on real e-commerce datasets.'],
+  ['training', 'Amazon Web Services', 'AI/ML Engineer Career Track', '16 Weeks', 'Online', '2026-11-10', 200, '₹4,999', ['Python', 'Machine Learning', 'Deep Learning', 'AWS'], 'From ML fundamentals to deploying models in production.'],
+  ['workshop', 'Cisco', 'Cybersecurity Fundamentals Workshop', '2 Days', 'On-site', '2026-10-05', 60, 'Free', ['Networking', 'Security'], 'Hands-on network security, threat analysis and incident response.'],
+  ['mentorship', 'Google', 'SWE Interview Mentorship', '6 Weeks', 'Online', '2026-10-10', 25, 'Free', ['Data Structures', 'System Design'], 'Weekly 1:1 sessions with Google engineers: problem solving, system design and mock interviews.'],
+  ['mentorship', 'Microsoft', 'ML Career Mentorship', '8 Weeks', 'Online', '2026-10-12', 20, 'Free', ['Machine Learning', 'Python'], 'Fortnightly mentoring with Microsoft data scientists on ML projects and career planning.'],
+  ['challenge', 'Flipkart', 'Flipkart GRiD 6.0 — E-Commerce Innovation', '6 Weeks', 'Hybrid', '2026-10-25', null, '₹5,00,000 + PPIs', ['Machine Learning', 'System Design'], 'Solve real e-commerce problem statements; winners get pre-placement interviews.'],
+  ['challenge', 'Microsoft', 'Microsoft Imagine Cup — India Finals', '3 Months', 'Online', '2026-11-15', null, 'USD 100,000 (global)', ['Azure', 'Machine Learning'], 'Build a tech solution to a real-world problem using Azure.'],
+  ['live-project', 'Bosch India', 'Live Industry Project — Smart Campus IoT', '10 Weeks', 'Hybrid', '2026-11-01', 12, '₹15,000 stipend', ['Embedded Systems', 'Python', 'MongoDB'], 'Build an IoT energy-monitoring system for a campus with Bosch engineers.'],
+  ['fdp', 'Google', 'Advanced AI & Deep Learning', '5 Days', 'Online', '2026-10-15', 50, '₹5,000 stipend', ['TensorFlow', 'PyTorch', 'Deep Learning'], 'State-of-the-art deep learning architectures including LLMs and multimodal AI.'],
+  ['fdp', 'Amazon Web Services', 'Cloud Architecture & DevOps', '3 Days', 'Hybrid', '2026-11-20', 80, '₹3,000 + AWS credits', ['AWS', 'Kubernetes', 'Docker'], 'AWS solutions architecture and production-grade DevOps practices.'],
+  ['industrial-training', 'Tata Steel', 'Industry Immersion — Manufacturing 4.0', '4 Weeks', 'On-site', '2026-12-01', 20, '₹40,000 stipend', ['Embedded Systems', 'Data Analysis'], 'Smart manufacturing, IoT sensor integration and AI-driven quality control on the shop floor.'],
+  ['faculty-internship', 'Flipkart', 'Faculty Summer Internship — Data Platforms', '6 Weeks', 'On-site', '2027-05-15', 5, '₹60,000 stipend', ['Spark', 'SQL', 'Python'], 'Work with Flipkart data platform teams to bring current practice into teaching.'],
+  ['consultancy', 'NTPC Limited', 'Smart Grid Load Optimisation', '3 Months', 'Hybrid', '2026-10-01', 3, '₹1,50,000 (project)', ['Machine Learning', 'Python'], 'AI-based optimisation for renewable energy load balancing.'],
+  ['research', 'Infosys', 'NLP for Indian Languages', '1 Year', 'Hybrid', '2026-10-15', 5, '₹3,00,000 / year', ['Deep Learning', 'Python'], 'Joint research on multilingual NLP models for the 22 scheduled Indian languages.'],
+  ['guest-lecture', 'NVIDIA India', 'Future of Generative AI in Enterprise', '2 Hours', 'Online', '2026-10-08', 10, 'No fee', ['Deep Learning'], 'An NVIDIA expert can deliver this session at your institution. Register to request a date.'],
+  ['guest-lecture', 'Google', 'Building Scalable Systems at Google', '2 Hours', 'Hybrid', '2026-10-22', 10, 'No fee', ['System Design'], 'A Google engineer can deliver this session at your institution. Register to request a date.'],
 ];
 
-const FACULTY_PROFILES = [
-  { email: 'priya.nair@nitk.edu.in', college: 'NITK Surathkal', dept: 'IT', designation: 'Associate Professor', experience: '12 years', specialization: ['AI/ML', 'NLP', 'Computer Vision'], publications: 28 },
-  { email: 'ramesh@nitk.edu.in', college: 'NITK Surathkal', dept: 'CSE', designation: 'Professor', experience: '20 years', specialization: ['Distributed Systems', 'Cloud Computing'], publications: 45 },
-];
-
-const INDUSTRY_PROFILES_DATA = [
-  { email: 'rahul@techcorp.io', company: 'TechCorp Solutions', designation: 'Head of Talent Acquisition', website: 'https://techcorp.io', industry_type: 'IT Services' },
-  { email: 'anjali@google.com', company: 'Google India', designation: 'University Recruiter', website: 'https://google.com', industry_type: 'Technology' },
-];
-
-const JOBS_DATA = [
-  { company: 'Google', logo: '🔵', color: '#4285f4', title: 'Software Engineering Intern', type: 'Internship', location: 'Bengaluru', mode: 'Hybrid', stipend: '₹80,000/month', duration: '6 months', skills: ['Python', 'Data Structures', 'System Design', 'Machine Learning'], min_cgpa: 8.0, openings: 15, description: "Join Google's Core ML team to build next-generation recommendation systems. Work with petabyte-scale data.", deadline: '2026-10-15', category: 'internship' },
-  { company: 'Microsoft', logo: '🟦', color: '#00a4ef', title: 'Full Stack Developer Intern', type: 'Internship', location: 'Hyderabad', mode: 'Hybrid', stipend: '₹70,000/month', duration: '4 months', skills: ['React.js', 'Node.js', 'SQL', 'Cloud (AWS/GCP)'], min_cgpa: 7.5, openings: 20, description: 'Work on Azure DevOps platform features used by millions of developers worldwide. Ship production code from day one.', deadline: '2026-10-20', category: 'internship' },
-  { company: 'Flipkart', logo: '🛍️', color: '#f7931a', title: 'Data Science Intern', type: 'Internship', location: 'Bengaluru', mode: 'On-site', stipend: '₹60,000/month', duration: '3 months', skills: ['Python', 'Machine Learning', 'SQL'], min_cgpa: 7.8, openings: 10, description: 'Build demand forecasting models that directly impact supply chain operations for 500M+ SKUs.', deadline: '2026-10-10', category: 'internship' },
-  { company: 'Zomato', logo: '🍴', color: '#e23744', title: 'Backend Engineer (SDE-I)', type: 'Full-Time', location: 'Gurugram', mode: 'Hybrid', stipend: '₹18 LPA', duration: 'Permanent', skills: ['Java', 'Node.js', 'Cloud (AWS/GCP)'], min_cgpa: 7.0, openings: 8, description: 'Build and scale backend services serving 80M+ monthly active users.', deadline: '2026-10-30', category: 'fulltime' },
-  { company: 'Razorpay', logo: '💳', color: '#3395ff', title: 'ML Engineer', type: 'Full-Time', location: 'Bengaluru', mode: 'Remote', stipend: '₹22 LPA', duration: 'Permanent', skills: ['Python', 'Machine Learning', 'TensorFlow', 'SQL'], min_cgpa: 8.0, openings: 5, description: "Build fraud detection models and risk scoring systems for India's fastest-growing fintech.", deadline: '2026-11-01', category: 'fulltime' },
-  { company: 'ISRO', logo: '🚀', color: '#ff6b35', title: 'Software Research Intern', type: 'Research Internship', location: 'Bengaluru', mode: 'On-site', stipend: '₹25,000/month', duration: '6 months', skills: ['Python', 'Data Structures'], min_cgpa: 8.5, openings: 4, description: 'Contribute to satellite telemetry processing and real-time ground station software.', deadline: '2026-09-30', category: 'research' },
-];
-
-const FACULTY_PROGRAMS_DATA = [
-  { type: 'FDP', icon: '📚', title: 'Advanced AI & Deep Learning', organizer: 'Google Developer Academy', duration: '5 Days', mode: 'Online', date: '2026-10-15', seats: 50, stipend: '₹5,000', skills: ['TensorFlow', 'PyTorch', 'Transformers', 'Machine Learning'], color: '#4285f4', description: 'Intensive program on state-of-the-art deep learning including LLMs and multimodal AI systems.', certificate: true },
-  { type: 'Industrial Internship', icon: '🏭', title: 'Industry Immersion Program - Manufacturing 4.0', organizer: 'Tata Steel', duration: '4 Weeks', mode: 'On-site (Jamshedpur)', date: '2026-12-01', seats: 20, stipend: '₹40,000', skills: ['IoT', 'Data Analysis', 'Python'], color: '#00447c', description: 'Hands-on exposure to smart manufacturing and AI-driven quality control.', certificate: true },
-  { type: 'FDP', icon: '☁️', title: 'Cloud Architecture & DevOps Certification', organizer: 'Amazon Web Services', duration: '3 Days', mode: 'Hybrid', date: '2026-11-20', seats: 80, stipend: '₹3,000 + AWS Credits', skills: ['Cloud (AWS/GCP)', 'Docker & Kubernetes', 'System Design'], color: '#ff9900', description: 'AWS Solutions Architect certification training with DevOps practices.', certificate: true },
-  { type: 'Guest Lecture', icon: '🎤', title: 'Future of Generative AI in Enterprise', organizer: 'NVIDIA India', duration: '2 Hours', mode: 'Virtual', date: '2026-09-25', seats: 200, stipend: 'Honorarium: ₹10,000', skills: ['Machine Learning', 'Python'], color: '#76b900', description: 'Expert session on deploying LLMs in enterprise workflows.', certificate: false },
-  { type: 'R&D Project', icon: '🧪', title: 'Collaborative Research: NLP for Indian Languages', organizer: 'Infosys Labs & IIT Bombay', duration: '1 Year', mode: 'Collaborative', date: '2026-10-15', seats: 5, stipend: '₹3,00,000 (Annual)', skills: ['Python', 'Machine Learning'], color: '#0d47a1', description: 'Research partnership to build multilingual NLP models for 22 Indian languages.', certificate: true },
-];
-
-// ─── Main seed function ───────────────────────────────────────────────────────
 async function seed() {
-  try {
-    // 1. Create Users
-    console.log('👤 Creating users...');
-    const userIdMap = {};
-
-    for (const u of USERS) {
-      const hash = await bcrypt.hash(u.password, 12);
-      const avatar = u.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({ name: u.name, email: u.email, password_hash: hash, role: u.role, avatar }, { onConflict: 'email' })
-        .select('id, email')
-        .single();
-
-      if (error) { console.error(`  ❌ User ${u.email}:`, error.message); continue; }
-      userIdMap[u.email] = data.id;
-      console.log(`  ✅ ${u.role}: ${u.name}`);
-    }
-
-    // 2. Create Student Profiles
-    console.log('\n🎓 Creating student profiles...');
-    const studentIdMap = {};
-    for (const sp of STUDENT_PROFILES) {
-      const userId = userIdMap[sp.email];
-      if (!userId) continue;
-
-      const { data, error } = await supabase
-        .from('students')
-        .upsert({ user_id: userId, college: sp.college, dept: sp.dept, year: sp.year, cgpa: sp.cgpa, skills: sp.skills }, { onConflict: 'user_id' })
-        .select('id')
-        .single();
-
-      if (error) { console.error(`  ❌ Student ${sp.email}:`, error.message); continue; }
-      studentIdMap[sp.email] = data.id;
-
-      // Create portfolio
-      await supabase.from('portfolios').upsert({
-        student_id: data.id,
-        certifications: [
-          { id: 1, title: 'Python for Data Science', issuer: 'Coursera', date: '2026-06-15', verified: true },
-          { id: 2, title: 'React Basics', issuer: 'Udemy', date: '2026-04-20', verified: false },
-        ],
-        projects: [
-          { id: 1, title: 'Smart Campus App', tech: ['React', 'Node.js', 'MongoDB'], verified: true, github: 'https://github.com' },
-          { id: 2, title: 'Crop Disease Detection', tech: ['Python', 'TensorFlow'], verified: true, github: 'https://github.com' },
-        ],
-        achievements: [
-          { id: 1, title: 'Smart India Hackathon 2025 Finalist', date: '2025-08-20' },
-        ],
-        github: 'https://github.com',
-        linkedin: 'https://linkedin.com',
-      }, { onConflict: 'student_id' });
-
-      console.log(`  ✅ ${sp.email} (CGPA: ${sp.cgpa})`);
-    }
-
-    // 3. Create Faculty Profiles
-    console.log('\n👨‍🏫 Creating faculty profiles...');
-    for (const fp of FACULTY_PROFILES) {
-      const userId = userIdMap[fp.email];
-      if (!userId) continue;
-
-      const { error } = await supabase
-        .from('faculty')
-        .upsert({ user_id: userId, ...fp }, { onConflict: 'user_id' });
-
-      if (error) console.error(`  ❌ Faculty ${fp.email}:`, error.message);
-      else console.log(`  ✅ ${fp.email}`);
-    }
-
-    // 4. Create Industry Profiles
-    console.log('\n🏢 Creating industry profiles...');
-    for (const ip of INDUSTRY_PROFILES_DATA) {
-      const userId = userIdMap[ip.email];
-      if (!userId) continue;
-
-      const { error } = await supabase
-        .from('industry_profiles')
-        .upsert({ user_id: userId, ...ip }, { onConflict: 'user_id' });
-
-      if (error) console.error(`  ❌ Industry ${ip.email}:`, error.message);
-      else console.log(`  ✅ ${ip.company}`);
-    }
-
-    // 5. Create Jobs
-    console.log('\n💼 Creating jobs...');
-    const jobIds = [];
-    const industryUserId = userIdMap['anjali@google.com'] || userIdMap['rahul@techcorp.io'];
-
-    for (const job of JOBS_DATA) {
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert({ ...job, posted_by: industryUserId })
-        .select('id')
-        .single();
-
-      if (error) { console.error(`  ❌ Job "${job.title}":`, error.message); continue; }
-      jobIds.push(data.id);
-      console.log(`  ✅ ${job.company}: ${job.title}`);
-    }
-
-    // 6. Create Applications (Arjun applies to first 3 jobs)
-    console.log('\n📋 Creating sample applications...');
-    const arjunStudentId = studentIdMap['arjun@nitk.edu.in'];
-    if (arjunStudentId && jobIds.length >= 3) {
-      const statuses = ['shortlisted', 'applied', 'applied'];
-      for (let i = 0; i < 3; i++) {
-        const { error } = await supabase
-          .from('applications')
-          .upsert({ student_id: arjunStudentId, job_id: jobIds[i], status: statuses[i] }, { onConflict: 'student_id,job_id' });
-        if (!error) console.log(`  ✅ Application ${i + 1} created`);
-      }
-    }
-
-    // 7. Create Faculty Programs
-    console.log('\n📚 Creating faculty programs...');
-    for (const program of FACULTY_PROGRAMS_DATA) {
-      const { error } = await supabase
-        .from('faculty_programs')
-        .insert({ ...program, posted_by: industryUserId });
-
-      if (error) console.error(`  ❌ Program "${program.title}":`, error.message);
-      else console.log(`  ✅ ${program.type}: ${program.title}`);
-    }
-
-    // 8. Create Notifications
-    console.log('\n🔔 Creating notifications...');
-    const arjunUserId = userIdMap['arjun@nitk.edu.in'];
-    if (arjunUserId) {
-      await supabase.from('notifications').insert([
-        { user_id: arjunUserId, type: 'application_shortlisted', message: '🎉 You have been shortlisted for "Software Engineering Intern" at Google!', read: false },
-        { user_id: arjunUserId, type: 'assessment_reminder', message: '📝 Complete your System Design assessment to boost your profile match score', read: false },
-        { user_id: arjunUserId, type: 'new_job', message: '🆕 New job matching your profile: ML Engineer at Razorpay (75% match)', read: true },
-      ]);
-      console.log('  ✅ Sample notifications created');
-    }
-
-    console.log('\n🎉 Seed completed successfully!\n');
-    console.log('📌 Demo login credentials:');
-    console.log('   Student:     arjun@nitk.edu.in / Password123');
-    console.log('   Faculty:     priya.nair@nitk.edu.in / Password123');
-    console.log('   Industry:    rahul@techcorp.io / Password123');
-    console.log('   Institution: placement@nitk.edu.in / Password123');
-    console.log('\n🚀 Run the server: cd server && npm run dev\n');
-
-  } catch (err) {
-    console.error('❌ Seed failed:', err.message);
-    process.exit(1);
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+    throw new Error('Refusing to wipe a production database. Re-run with --force if you really mean it.');
   }
+  await connectDB();
+  await Promise.all([User, Student, Job, Application, Assessment, Program, Registration].map(m => m.deleteMany({})));
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+
+  // Talent pool
+  const me = CURRENT_USER.student;
+  const students = [];
+  for (const [i, c] of CANDIDATES.entries()) {
+    const skills = canonicalProfile(i === 0 ? me.skills : c.skills);
+    const portfolio = i === 0 ? {
+      projects: me.projects.map(p => ({ title: p.title, tech: p.tech, verified: p.verified })),
+    } : {};
+    students.push(await Student.create({
+      name: c.name, avatar: c.avatar, college: c.college, dept: c.dept, year: c.year, cgpa: c.cgpa,
+      skills, skillSource: Object.fromEntries(Object.keys(skills).map(s => [s, 'self'])),
+      ...portfolio,
+    }));
+  }
+  for (const c of NITK_COHORT) {
+    const skills = canonicalProfile(c.skills);
+    await Student.create({
+      ...c, avatar: c.name.split(' ').map(w => w[0]).join(''), college: 'NITK Surathkal',
+      skills, skillSource: Object.fromEntries(Object.keys(skills).map(s => [s, 'self'])),
+    });
+  }
+
+  // One recruiter account per company; Microsoft's is the headline demo login
+  const recruiters = {};
+  for (const company of [...new Set([...JOBS.map(j => j.company), ...PROGRAMS.map(p => p[1])])]) {
+    const slug = company.toLowerCase().replace(/[^a-z]/g, '');
+    const name = company === 'Microsoft' ? CURRENT_USER.industry.name : `${company} Talent Team`;
+    recruiters[company] = await User.create({
+      name, email: company === 'Microsoft' ? 'rahul.mehta@microsoft.demo' : `hr@${slug}.demo`,
+      role: 'industry', organization: company, designation: 'Talent Acquisition',
+      avatar: name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(), passwordHash,
+    });
+  }
+
+  const jobs = [];
+  for (const { id: _id, match: _match, posted: _posted, applicants: _a, ...j } of JOBS) {
+    jobs.push(await Job.create({ ...j, skills: j.skills.map(canonicalSkill), minSkillLevel: 60, postedBy: recruiters[j.company]._id }));
+  }
+
+  // Applications with a plausible stage history
+  for (const [ji, ci, status, daysAgo] of SEED_APPLICATIONS) {
+    const job = jobs[ji], student = students[ci];
+    const start = Date.now() - daysAgo * 86400000;
+    const stages = status === 'rejected' ? ['applied', 'rejected'] : PIPELINE.slice(0, PIPELINE.indexOf(status) + 1);
+    const history = stages.map((st, k) => ({ status: st, at: new Date(start + k * 2 * 86400000) }));
+    const app = await Application.create({
+      job: job._id, student: student._id, status,
+      matchAtApply: explainMatch(student.skills, job.toJSON(), student.cgpa).score,
+      history,
+    });
+    await Application.updateOne({ _id: app._id }, { $set: { createdAt: new Date(start) } }, { timestamps: false });
+    await Job.updateOne({ _id: job._id }, { $inc: { applicants: 1 } });
+  }
+
+  // Logins
+  const arjun = await User.create({ name: me.name, email: me.email, role: 'student', organization: me.college, dept: me.dept, avatar: me.avatar, passwordHash, student: students[0]._id });
+  const f = CURRENT_USER.faculty;
+  const priya = await User.create({ name: f.name, email: f.email, role: 'faculty', organization: f.college, dept: f.dept, designation: f.designation, avatar: f.avatar, passwordHash });
+
+  // Programs, plus a couple of registrations
+  const programs = [];
+  for (const [kind, org, title, duration, mode, startDate, seats, compensation, skills, description] of PROGRAMS) {
+    programs.push(await Program.create({
+      kind, title, duration, mode, startDate, seats: seats ?? undefined, compensation, description,
+      skills: skills.map(canonicalSkill), organization: org, postedBy: recruiters[org]._id,
+    }));
+  }
+  const byTitle = t => programs.find(p => p.title === t)._id;
+  await Registration.create({ program: byTitle('Google Cloud Professional Track'), user: arjun._id, status: 'accepted' });
+  await Registration.create({ program: byTitle('Full Stack Web Development Bootcamp'), user: arjun._id, message: 'Keen to strengthen my Node.js.' });
+  await Registration.create({ program: byTitle('Advanced AI & Deep Learning'), user: priya._id, message: 'Would like to update our DL elective.' });
+  const t = CURRENT_USER.institution;
+  await User.create({ name: t.name, email: t.email, role: 'institution', organization: t.college, designation: t.role, avatar: t.avatar, passwordHash });
+
+  console.log(`Seeded ${await Student.countDocuments()} students, ${jobs.length} jobs, ${SEED_APPLICATIONS.length} applications, ${programs.length} programs.`);
+  console.log(`Demo logins (password: ${DEMO_PASSWORD}):`);
+  console.log(`  student      ${me.email}`);
+  console.log(`  industry     rahul.mehta@microsoft.demo`);
+  console.log(`  faculty      ${f.email}`);
+  console.log(`  institution  ${t.email}`);
 }
 
-seed();
+seed()
+  .catch(err => { console.error(err.message); process.exitCode = 1; })
+  .finally(() => mongoose.disconnect());

@@ -126,7 +126,6 @@ export default function FacultyPrograms() {
                 ['📅 Date', selected.date], ['⏱️ Duration', selected.duration],
                 ['📍 Mode', selected.mode], ['💰 Stipend', selected.stipend],
                 ['🪑 Seats', `${selected.seats - selected.registered} remaining`],
-                ['🏆 Certificate', selected.certificate ? 'Provided' : 'Not provided']
               ].map(([k, v]) => (
                 <div key={k} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px' }}>
                   <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>{k}</div>

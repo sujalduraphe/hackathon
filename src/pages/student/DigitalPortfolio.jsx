@@ -1,257 +1,257 @@
 import { useState } from 'react';
-import { GitBranch, ExternalLink, Award, CheckCircle, Plus, Download, Share2, QrCode } from 'lucide-react';
-import { CURRENT_USER } from '../../data/store';
+import { CheckCircle, Plus, Trash2, Clock, Upload, FileText } from 'lucide-react';
+import { useAppState } from '../../state/AppState';
+
+const SECTIONS = {
+  projects: {
+    title: 'Projects',
+    fields: [['title', 'Project title', true], ['tech', 'Technologies (comma-separated)'], ['link', 'Link'], ['description', 'Short description']],
+    primary: i => i.title,
+    secondary: i => [(i.tech || []).join(', '), i.description].filter(Boolean).join(' · '),
+  },
+  achievements: {
+    title: 'Achievements',
+    fields: [['title', 'Achievement', true], ['year', 'Year'], ['description', 'Details']],
+    primary: i => i.title,
+    secondary: i => [i.year, i.description].filter(Boolean).join(' · '),
+  },
+};
+
+function VerifiedTag({ verified }) {
+  return verified
+    ? <span className="badge badge-emerald"><CheckCircle size={10} /> Verified</span>
+    : <span className="badge badge-gray"><Clock size={10} /> Pending verification</span>;
+}
+
+function Section({ kind, items }) {
+  const { addPortfolioItem, removePortfolioItem } = useAppState();
+  const cfg = SECTIONS[kind];
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({});
+  const [error, setError] = useState('');
+
+  async function save(e) {
+    e.preventDefault();
+    setError('');
+    try {
+      await addPortfolioItem(kind, form);
+      setForm({});
+      setAdding(false);
+    } catch (err) { setError(err.message); }
+  }
+
+  async function remove(id) {
+    try { await removePortfolioItem(kind, id); } catch (err) { setError(err.message); }
+  }
+
+  return (
+    <div className="card" style={{ marginBottom: 20 }}>
+      <div className="section-header">
+        <div className="section-title">{cfg.title} ({items.length})</div>
+        {!adding && <button className="btn btn-ghost btn-sm" onClick={() => setAdding(true)}><Plus size={13} /> Add</button>}
+      </div>
+
+      {items.length === 0 && !adding && <div style={{ fontSize: 13, color: '#9ca3af' }}>Nothing added yet.</div>}
+      {items.map(i => (
+        <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{cfg.primary(i)}</div>
+            {cfg.secondary(i) && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{cfg.secondary(i)}</div>}
+          </div>
+          <VerifiedTag verified={i.verified} />
+          {!i.verified && (
+            <button className="btn btn-ghost btn-sm" onClick={() => remove(i.id)} title="Remove"><Trash2 size={13} /></button>
+          )}
+        </div>
+      ))}
+
+      {adding && (
+        <form onSubmit={save} style={{ marginTop: 12, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
+          <div className="grid-2" style={{ gap: 12 }}>
+            {cfg.fields.map(([key, label, required]) => (
+              <div key={key} className="form-group">
+                <label className="form-label">{label}{required ? ' *' : ''}</label>
+                <input className="form-input" value={form[key] || ''} required={required}
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="submit" className="btn btn-primary btn-sm">Save</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setAdding(false); setForm({}); setError(''); }}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {error && <div className="auth-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
+    </div>
+  );
+}
+
+const LEVELS = [[40, 'Beginner'], [60, 'Intermediate'], [80, 'Advanced']];
+
+function ResumeCard({ profile }) {
+  const { uploadResume, deleteResume, addSkills, openResume } = useAppState();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [detected, setDetected] = useState(null); // [{ skill, evidence, current, source }]
+  const [picked, setPicked] = useState({});        // skill -> level (only checked ones)
+  const [added, setAdded] = useState('');
+
+  async function onFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError(''); setAdded(''); setBusy(true);
+    try {
+      if (file.type !== 'application/pdf') throw new Error('Please choose a PDF file.');
+      if (file.size > 2 * 1024 * 1024) throw new Error('File is larger than 2 MB.');
+      const r = await uploadResume(file);
+      // offer only skills that aren't already verified by an assessment
+      const offer = r.detected.filter(d => d.source !== 'assessment');
+      setDetected(offer);
+      setPicked(Object.fromEntries(offer.filter(d => d.current == null).map(d => [d.skill, 60])));
+      if (!r.textFound) setError('No text found in this PDF (it may be a scanned image). The file was saved, but no skills could be detected.');
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+
+  async function confirm() {
+    setBusy(true); setError('');
+    try {
+      await addSkills(picked);
+      setAdded(`${Object.keys(picked).length} skill${Object.keys(picked).length === 1 ? '' : 's'} added to your profile as self-declared. Take an assessment to verify them.`);
+      setDetected(null); setPicked({});
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+
+  async function view() {
+    setError('');
+    try { await openResume(profile.id); } catch (err) { setError(err.message); }
+  }
+
+  async function remove() {
+    setError(''); setBusy(true);
+    try { await deleteResume(); setDetected(null); } catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+
+  const toggle = skill => setPicked(p => {
+    const n = { ...p };
+    if (skill in n) delete n[skill]; else n[skill] = 60;
+    return n;
+  });
+
+  return (
+    <div className="card" style={{ marginBottom: 20 }}>
+      <div className="section-header">
+        <div className="section-title">Resume</div>
+        <label className={`btn btn-sm ${profile.resume ? 'btn-ghost' : 'btn-primary'}`} style={{ cursor: busy ? 'wait' : 'pointer' }}>
+          <Upload size={13} /> {busy ? 'Working…' : profile.resume ? 'Replace' : 'Upload PDF'}
+          <input type="file" accept="application/pdf" onChange={onFile} disabled={busy} hidden />
+        </label>
+      </div>
+
+      {!profile.resume && <div style={{ fontSize: 13, color: '#9ca3af' }}>Upload your resume (PDF, max 2 MB). Skills found in it can be added to your profile, and recruiters can view it.</div>}
+      {profile.resume && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <FileText size={18} color="#6366f1" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{profile.resume.filename}</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>{Math.ceil(profile.resume.size / 1024)} KB · uploaded {new Date(profile.resume.uploadedAt).toLocaleDateString()}</div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={view}>View</button>
+          <button className="btn btn-ghost btn-sm" onClick={remove} disabled={busy} title="Remove resume"><Trash2 size={13} /></button>
+        </div>
+      )}
+
+      {detected && (
+        <div style={{ marginTop: 16, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+            {detected.length ? `Skills found in your resume (${detected.length})` : 'No new skills found in your resume.'}
+          </div>
+          {detected.length > 0 && <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>Tick the ones to add and choose your level. Skills already verified by an assessment are not shown.</div>}
+          {detected.map(d => (
+            <div key={d.skill} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', flexWrap: 'wrap' }}>
+              <input type="checkbox" checked={d.skill in picked} onChange={() => toggle(d.skill)} id={`sk-${d.skill}`} />
+              <label htmlFor={`sk-${d.skill}`} style={{ width: 140, fontWeight: 600, fontSize: 13 }}>{d.skill}</label>
+              <select className="form-select" style={{ width: 150, padding: '4px 8px' }} disabled={!(d.skill in picked)}
+                value={picked[d.skill] ?? 60} onChange={e => setPicked(p => ({ ...p, [d.skill]: Number(e.target.value) }))}>
+                {LEVELS.map(([v, l]) => <option key={v} value={v}>{l} ({v}%)</option>)}
+              </select>
+              <span style={{ flex: 1, minWidth: 180, fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>
+                {d.current != null && `currently ${d.current}% · `}“{d.evidence}”
+              </span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            {detected.length > 0 && (
+              <button className="btn btn-primary btn-sm" onClick={confirm} disabled={busy || !Object.keys(picked).length}>
+                Add {Object.keys(picked).length} to profile
+              </button>
+            )}
+            <button className="btn btn-ghost btn-sm" onClick={() => { setDetected(null); setPicked({}); }}>Close</button>
+          </div>
+        </div>
+      )}
+      {added && <div style={{ marginTop: 10, fontSize: 13, color: '#047857' }}>{added}</div>}
+      {error && <div className="auth-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
+    </div>
+  );
+}
 
 export default function DigitalPortfolio() {
-  const user = CURRENT_USER.student;
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showQR, setShowQR] = useState(false);
-
-  const tabs = ['overview', 'projects', 'certifications', 'skills'];
+  const { profile, applications, jobs } = useAppState();
+  const jobById = Object.fromEntries(jobs.map(j => [j.id, j]));
+  const internships = applications.filter(a => a.status === 'offered' && jobById[a.jobId]);
+  const skills = Object.entries(profile.skills || {}).sort((a, b) => b[1] - a[1]);
+  const verifiedCount = ['projects', 'achievements']
+    .reduce((n, k) => n + (profile[k] || []).filter(i => i.verified).length, 0);
 
   return (
     <div className="animate-fade-in">
-      {/* Hero Profile */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(99,102,241,0.1))',
-        border: '1px solid rgba(16,185,129,0.2)', borderRadius: 24,
-        padding: '28px 32px', marginBottom: 28, position: 'relative', overflow: 'hidden'
-      }}>
-        {/* Background decoration */}
-        <div style={{
-          position: 'absolute', right: -20, top: -20,
-          width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.1), transparent)',
-        }} />
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #10b981, #6366f1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, fontWeight: 800, flexShrink: 0,
-            boxShadow: '0 0 30px rgba(16,185,129,0.4), 0 0 60px rgba(99,102,241,0.2)'
-          }}>
-            {user.avatar}
-          </div>
-
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800 }}>{user.name}</h1>
-              <span className="verified-badge"><CheckCircle size={10} /> Verified Student</span>
-            </div>
-            <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 10 }}>
-              {user.year} · {user.dept} · {user.college}
-            </div>
-            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: '#4b5563' }}>📊 CGPA: <strong style={{ color: '#10b981' }}>{user.cgpa}</strong></span>
-              <span style={{ fontSize: 13, color: '#4b5563' }}>🏆 {user.certifications.length} Certifications</span>
-              <span style={{ fontSize: 13, color: '#4b5563' }}>💼 {user.projects.length} Projects</span>
-              <span style={{ fontSize: 13, color: '#4b5563' }}>✅ {user.projects.filter(p => p.verified).length} Verified</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button className="btn btn-sm btn-primary" onClick={() => setShowQR(true)}>
-              <QrCode size={13} /> Share Portfolio
-            </button>
-            <button className="btn btn-sm btn-ghost">
-              <Download size={13} /> ATS Resume
-            </button>
-          </div>
-        </div>
-
-        {/* Skills quick view */}
-        <div style={{ marginTop: 20, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {Object.entries(user.skills).slice(0, 8).map(([skill, val]) => (
-            <div key={skill} style={{
-              padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500,
-              background: `rgba(${val >= 75 ? '16,185,129' : val >= 55 ? '245,158,11' : '244,63,94'}, 0.1)`,
-              border: `1px solid rgba(${val >= 75 ? '16,185,129' : val >= 55 ? '245,158,11' : '244,63,94'}, 0.2)`,
-              color: val >= 75 ? '#10b981' : val >= 55 ? '#f59e0b' : '#f43f5e'
-            }}>
-              {skill} · {val}%
-            </div>
-          ))}
+      <div className="page-hero">
+        <h1 className="page-hero-title">🏆 Digital Portfolio</h1>
+        <p className="page-hero-subtitle">
+          {profile.name} · {[profile.year && `${profile.year} Year`, profile.dept, profile.college].filter(Boolean).join(' · ')}
+          {profile.cgpa != null && ` · CGPA ${profile.cgpa}`}
+        </p>
+        <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>
+          Items you add are verified by your institution. {verifiedCount} item{verifiedCount === 1 ? '' : 's'} verified so far.
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4, marginBottom: 24, width: 'fit-content' }}>
-        {tabs.map(t => (
-          <button
-            key={t}
-            className={`btn btn-sm ${activeTab === t ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setActiveTab(t)}
-            style={{ textTransform: 'capitalize' }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <ResumeCard profile={profile} />
 
-      {activeTab === 'overview' && (
-        <div className="grid-2">
-          {/* Achievements */}
-          <div className="card">
-            <div className="section-title" style={{ marginBottom: 16 }}>🏆 Achievements</div>
-            {[
-              { icon: '🥇', title: 'Smart India Hackathon 2025', desc: 'Regional Finalist', color: '#f59e0b' },
-              { icon: '📊', title: 'Top 5% Assessment Score', desc: 'Python & ML · 82nd percentile', color: '#6366f1' },
-              { icon: '🌟', title: 'Dean\'s List', desc: '2024-25 Academic Year', color: '#10b981' },
-              { icon: '💡', title: 'Research Paper Published', desc: 'IEEE · Image Classification using CNNs', color: '#f43f5e' },
-            ].map((a, i) => (
-              <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 10, background: `${a.color}22`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0
-                }}>
-                  {a.icon}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{a.title}</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{a.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Activity Stats */}
-          <div className="card">
-            <div className="section-title" style={{ marginBottom: 16 }}>📈 Profile Strength</div>
-            {[
-              { label: 'Skill Completeness', val: 72 },
-              { label: 'Assessment Score', val: 82 },
-              { label: 'Portfolio Quality', val: 68 },
-              { label: 'Application Activity', val: 55 },
-            ].map((item, i) => (
-              <div key={i} className="progress-container" style={{ marginBottom: 14 }}>
-                <div className="progress-label">
-                  <span>{item.label}</span>
-                  <span style={{ color: '#6366f1', fontWeight: 600 }}>{item.val}%</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill progress-primary" style={{ width: `${item.val}%` }} />
-                </div>
-              </div>
-            ))}
-            <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(99,102,241,0.08)', borderRadius: 10, border: '1px solid rgba(99,102,241,0.15)', fontSize: 13, color: '#4b5563' }}>
-              💡 <strong>Tip:</strong> Add 2 more certifications to boost your profile strength to 85%
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'projects' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <button className="btn btn-primary btn-sm"><Plus size={12} /> Add Project</button>
-          </div>
-          <div className="grid-auto">
-            {user.projects.map((p, i) => (
-              <div key={i} className="portfolio-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{p.title}</div>
-                  {p.verified && <span className="verified-badge"><CheckCircle size={10} /> Verified</span>}
-                </div>
-                <div className="skill-tags" style={{ marginBottom: 16 }}>
-                  {p.tech.map(t => <span key={t} className="tag">{t}</span>)}
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-ghost btn-sm"><GitBranch size={12} /> GitHub</button>
-                  <button className="btn btn-ghost btn-sm"><ExternalLink size={12} /> Live Demo</button>
-                </div>
-              </div>
-            ))}
-            {/* Add card */}
-            <div className="portfolio-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 140, border: '1px dashed rgba(255,255,255,0.1)', flexDirection: 'column', gap: 8, color: '#9ca3af' }}>
-              <Plus size={24} />
-              <span style={{ fontSize: 13 }}>Add New Project</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'certifications' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <button className="btn btn-primary btn-sm"><Plus size={12} /> Add Certificate</button>
-          </div>
-          <div className="grid-auto">
-            {[
-              { name: 'Python for Data Science', issuer: 'Coursera · IBM', date: 'Aug 2025', id: 'CRSA-8721-PDS', verified: true, icon: '🐍' },
-              { name: 'React Basics', issuer: 'Udemy', date: 'Jun 2025', id: 'UDM-4521-RB', verified: true, icon: '⚛️' },
-              { name: 'AWS Cloud Practitioner', issuer: 'Amazon Web Services', date: 'In Progress', id: 'Pending', verified: false, icon: '☁️' },
-            ].map((cert, i) => (
-              <div key={i} className="portfolio-card">
-                <div style={{ fontSize: 36, marginBottom: 12 }}>{cert.icon}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{cert.name}</div>
-                  {cert.verified && <span className="verified-badge"><CheckCircle size={10} /> Verified</span>}
-                </div>
-                <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>{cert.issuer} · {cert.date}</div>
-                {cert.verified && (
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#9ca3af' }}>ID: {cert.id}</div>
-                )}
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button className="btn btn-ghost btn-sm"><ExternalLink size={11} /> View</button>
-                  <button className="btn btn-ghost btn-sm"><Share2 size={11} /> Share</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'skills' && (
-        <div className="grid-2">
-          {Object.entries(user.skills).map(([skill, val]) => {
-            const color = val >= 75 ? '#10b981' : val >= 55 ? '#f59e0b' : '#f43f5e';
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="section-title" style={{ marginBottom: 12 }}>Skills</div>
+        {skills.length === 0 && <div style={{ fontSize: 13, color: '#9ca3af' }}>Take a skill assessment or upload your resume to add skills.</div>}
+        <div className="skill-tags">
+          {skills.map(([sk, v]) => {
+            const verified = profile.skillSource?.[sk] === 'assessment';
             return (
-              <div key={skill} className="gap-card">
-                <div style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  background: `${color}22`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 16, color, flexShrink: 0
-                }}>
-                  {val}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{skill}</div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{ width: `${val}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)` }} />
-                  </div>
-                </div>
-                {val >= 75 && <CheckCircle size={16} color="#10b981" />}
-              </div>
+              <span key={sk} className="tag" style={verified ? { color: '#047857', borderColor: '#a7f3d0', background: '#ecfdf5' } : undefined}>
+                {verified && '✓ '}{sk} · {v}%
+              </span>
             );
           })}
         </div>
-      )}
+        {skills.length > 0 && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10 }}>✓ = verified by assessment on this portal</div>}
+      </div>
 
-      {/* QR Modal */}
-      {showQR && (
-        <div className="modal-overlay" onClick={() => setShowQR(false)}>
-          <div className="modal-content" style={{ maxWidth: 380, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>📱 Share Portfolio</div>
-            <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 24 }}>Share your verified digital portfolio with recruiters</p>
-            {/* QR Placeholder */}
-            <div style={{
-              width: 200, height: 200, margin: '0 auto 20px',
-              background: 'white', borderRadius: 12, padding: 12,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 40
-            }}>
-              📊
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="section-title" style={{ marginBottom: 12 }}>Internships & placements</div>
+        {internships.length === 0 && <div style={{ fontSize: 13, color: '#9ca3af' }}>Offers you receive through the portal appear here automatically.</div>}
+        {internships.map(a => (
+          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #f3f4f6' }}>
+            <span style={{ fontSize: 22 }}>{jobById[a.jobId].logo}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{jobById[a.jobId].title}</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>{jobById[a.jobId].company} · offered {a.history.at(-1).at.slice(0, 10)}</div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#9ca3af', marginBottom: 20 }}>
-              skillbridge.edu/portfolio/arjun-sharma-nitk
-            </div>
-            <button className="btn btn-primary w-full">Copy Link</button>
+            <span className="badge badge-emerald"><CheckCircle size={10} /> Portal record</span>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {Object.keys(SECTIONS).map(kind => <Section key={kind} kind={kind} items={profile[kind] || []} />)}
     </div>
   );
 }
